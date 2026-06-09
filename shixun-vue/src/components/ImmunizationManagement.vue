@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const emit = defineEmits(['alert'])
 
@@ -41,6 +44,35 @@ async function deleteRecord(id) {
 
 function today() { return new Date().toISOString().split('T')[0] }
 
+function exportExcel() {
+  const rows = filtered.value.map(r => ({
+    耳标号: r.earTag,
+    疫苗名称: r.vaccineName,
+    免疫日期: r.eventTime,
+    剂量: r.dosage || '',
+    执行人: r.operator || '',
+    备注: r.notes || '',
+  }))
+  const ws = XLSX.utils.json_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '免疫记录')
+  XLSX.writeFile(wb, `免疫记录_${today()}.xlsx`)
+}
+
+function exportPDF() {
+  const doc = new jsPDF({ orientation: 'landscape' })
+  doc.setFont('helvetica')
+  doc.text('免疫记录台账', 14, 14)
+  autoTable(doc, {
+    startY: 22,
+    head: [['耳标号', '疫苗名称', '免疫日期', '剂量', '执行人', '备注']],
+    body: filtered.value.map(r => [r.earTag, r.vaccineName, r.eventTime, r.dosage || '', r.operator || '', r.notes || '']),
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [13, 148, 136] },
+  })
+  doc.save(`免疫记录_${today()}.pdf`)
+}
+
 onMounted(load)
 </script>
 
@@ -51,10 +83,20 @@ onMounted(load)
         <h2 class="page-title">免疫记录管理</h2>
         <p class="page-desc">录入个体免疫事件，自动挂载至个体时间线</p>
       </div>
-      <button class="btn btn-primary" @click="openAdd">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        录入免疫
-      </button>
+      <div class="header-actions">
+        <button class="btn btn-secondary" @click="exportExcel" title="导出 Excel">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          导出 Excel
+        </button>
+        <button class="btn btn-secondary" @click="exportPDF" title="导出 PDF">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          导出 PDF
+        </button>
+        <button class="btn btn-primary" @click="openAdd">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          录入免疫
+        </button>
+      </div>
     </div>
 
     <div class="stats-row">
@@ -145,6 +187,12 @@ onMounted(load)
 </template>
 
 <style scoped>
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .cell-truncate {
   max-width: 150px;
   overflow: hidden;

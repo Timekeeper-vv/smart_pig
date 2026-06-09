@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const emit = defineEmits(['alert'])
 
@@ -54,6 +57,36 @@ async function deleteBatch(id) {
 
 function today() { return new Date().toISOString().split('T')[0] }
 
+function exportExcel() {
+  const rows = filtered.value.map(b => ({
+    批次号: b.batchCode,
+    入栏日期: b.entryDate,
+    品种: b.breed,
+    来源地: b.source || '',
+    初始圈舍: b.initialPenName || '',
+    存栏数: b.animalCount || 0,
+    备注: b.notes || '',
+  }))
+  const ws = XLSX.utils.json_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '批次台账')
+  XLSX.writeFile(wb, `批次台账_${today()}.xlsx`)
+}
+
+function exportPDF() {
+  const doc = new jsPDF({ orientation: 'landscape' })
+  doc.setFont('helvetica')
+  doc.text('养殖批次台账', 14, 14)
+  autoTable(doc, {
+    startY: 22,
+    head: [['批次号', '入栏日期', '品种', '来源地', '初始圈舍', '存栏数', '备注']],
+    body: filtered.value.map(b => [b.batchCode, b.entryDate, b.breed, b.source || '', b.initialPenName || '', b.animalCount || 0, b.notes || '']),
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [13, 148, 136] },
+  })
+  doc.save(`批次台账_${today()}.pdf`)
+}
+
 onMounted(load)
 </script>
 
@@ -64,10 +97,20 @@ onMounted(load)
         <h2 class="page-title">养殖批次管理</h2>
         <p class="page-desc">按"同进同出"原则对牲畜进行逻辑分组管理</p>
       </div>
-      <button class="btn btn-primary" @click="openAdd">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        新建批次
-      </button>
+      <div class="header-actions">
+        <button class="btn btn-secondary" @click="exportExcel" title="导出 Excel">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          导出 Excel
+        </button>
+        <button class="btn btn-secondary" @click="exportPDF" title="导出 PDF">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          导出 PDF
+        </button>
+        <button class="btn btn-primary" @click="openAdd">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建批次
+        </button>
+      </div>
     </div>
 
     <div class="stats-row">
@@ -165,6 +208,12 @@ onMounted(load)
 </template>
 
 <style scoped>
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .cell-truncate {
   max-width: 140px;
   overflow: hidden;

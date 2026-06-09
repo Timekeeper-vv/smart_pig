@@ -13,10 +13,13 @@ import MedicationManagement from './components/MedicationManagement.vue'
 import PenTransferManagement from './components/PenTransferManagement.vue'
 import SlaughterManagement from './components/SlaughterManagement.vue'
 import TraceabilityView from './components/TraceabilityView.vue'
+import StatisticsView from './components/StatisticsView.vue'
+import NotificationPanel from './components/NotificationPanel.vue'
 import GlobalAlert from './components/GlobalAlert.vue'
 
 const PAGE_ROLES = {
   dashboard:    ['admin', 'technician'],
+  statistics:   ['admin', 'technician'],
   pens:         ['admin', 'feeder'],
   drugs:        ['admin', 'technician'],
   batches:      ['admin', 'feeder'],
@@ -79,6 +82,7 @@ function onLogout() {
 
 const pageLabels = {
   dashboard:    '概览仪表盘',
+  statistics:   '数据统计分析',
   pens:         '圈舍管理',
   drugs:        '兽药疫苗库',
   batches:      '养殖批次',
@@ -125,6 +129,7 @@ const pageLabels = {
           </nav>
         </div>
         <div class="header-right">
+          <NotificationPanel />
           <div class="user-chip">
             <div class="user-avatar">{{ currentUser.username?.[0]?.toUpperCase() }}</div>
             <span class="user-name">{{ currentUser.username }}</span>
@@ -139,6 +144,7 @@ const pageLabels = {
       <!-- Main content -->
       <main class="app-main">
         <Dashboard          v-if="currentPage === 'dashboard'"    @switch-page="p => { if (hasAccess(p, currentUser?.role)) currentPage = p }" @alert="showAlert" />
+        <StatisticsView     v-if="currentPage === 'statistics'"   @alert="showAlert" />
         <PenManagement          v-if="currentPage === 'pens'"          @alert="showAlert" />
         <DrugVaccineManagement  v-if="currentPage === 'drugs'"         @alert="showAlert" />
         <BatchManagement        v-if="currentPage === 'batches'"       @alert="showAlert" />
