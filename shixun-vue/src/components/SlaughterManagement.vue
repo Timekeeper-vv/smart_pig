@@ -1,13 +1,19 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
+import type { SlaughterRecord, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const records = ref([])
-const search = ref('')
-const showModal = ref(false)
-const form = ref({ earTag: '', eventTime: '', type: 'SALE', destination: '', weight: null, price: null })
+interface SlaughterForm {
+  earTag: string; eventTime: string; type: 'SALE' | 'SLAUGHTER' | 'TRANSFER'
+  destination: string; weight: number | null; price: number | null
+}
+
+const records = ref<SlaughterRecord[]>([])
+const search = ref<string>('')
+const showModal = ref<boolean>(false)
+const form = ref<SlaughterForm>({ earTag: '', eventTime: '', type: 'SALE', destination: '', weight: null, price: null })
 
 const filtered = computed(() =>
   records.value.filter(r => r.earTag?.includes(search.value) || r.destination?.includes(search.value))
@@ -37,8 +43,8 @@ async function deleteRecord(id) {
   load(); emit('alert', '删除成功')
 }
 
-const typeLabel = { SALE: '销售', SLAUGHTER: '屠宰', TRANSFER: '转移' }
-const typeClass  = { SALE: 'badge-success', SLAUGHTER: 'badge-error', TRANSFER: 'badge-info' }
+const typeLabel: Record<string, string> = { SALE: '销售', SLAUGHTER: '屠宰', TRANSFER: '转移' }
+const typeClass: Record<string, string>  = { SALE: 'badge-success', SLAUGHTER: 'badge-error', TRANSFER: 'badge-info' }
 
 function today() { return new Date().toISOString().split('T')[0] }
 

@@ -1,18 +1,35 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
+import type { User, PageName, Role } from '../types'
 
-const props = defineProps({
-  currentUser: Object,
-  currentPage: String,
-  collapsed: Boolean,
-})
+interface MenuItem {
+  key: PageName
+  label: string
+  roles: Role[]
+  icon: string
+}
 
-const emit = defineEmits(['switch-page', 'logout', 'toggle'])
+interface MenuGroup {
+  group: string
+  items: MenuItem[]
+}
 
-const roleLabels = { admin: '管理员', technician: '技术员', feeder: '饲养员' }
-const roleColors = { admin: '#0d9488', technician: '#2563eb', feeder: '#d97706' }
+const props = defineProps<{
+  currentUser: User
+  currentPage: PageName
+  collapsed: boolean
+}>()
 
-const allMenus = [
+const emit = defineEmits<{
+  'switch-page': [page: PageName]
+  'logout': []
+  'toggle': []
+}>()
+
+const roleLabels: Record<Role, string> = { admin: '管理员', technician: '技术员', feeder: '饲养员' }
+const roleColors: Record<Role, string> = { admin: '#0d9488', technician: '#2563eb', feeder: '#d97706' }
+
+const allMenus: MenuGroup[] = [
   {
     group: '概览',
     items: [
@@ -52,15 +69,15 @@ const allMenus = [
   },
 ]
 
-const menus = computed(() => {
-  const role = props.currentUser?.role || 'admin'
+const menus = computed<MenuGroup[]>(() => {
+  const role: Role = props.currentUser?.role || 'admin'
   return allMenus
     .map(g => ({ ...g, items: g.items.filter(item => item.roles.includes(role)) }))
     .filter(g => g.items.length > 0)
 })
 
-const currentRoleLabel = computed(() => roleLabels[props.currentUser?.role] || '管理员')
-const currentRoleColor = computed(() => roleColors[props.currentUser?.role] || '#0d9488')
+const currentRoleLabel = computed<string>(() => roleLabels[props.currentUser?.role] || '管理员')
+const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.role] || '#0d9488')
 </script>
 
 <template>

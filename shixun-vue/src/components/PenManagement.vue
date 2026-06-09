@@ -1,14 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
+import type { Pen, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const pens = ref([])
-const search = ref('')
-const showModal = ref(false)
-const editingId = ref(null)
-const form = ref({ penCode: '', penName: '', capacity: 50, responsiblePerson: '', status: 1 })
+interface PenForm { penCode: string; penName: string; capacity: number; responsiblePerson: string; status: number }
+
+const pens = ref<Pen[]>([])
+const search = ref<string>('')
+const showModal = ref<boolean>(false)
+const editingId = ref<number | null>(null)
+const form = ref<PenForm>({ penCode: '', penName: '', capacity: 50, responsiblePerson: '', status: 1 })
 
 const filtered = computed(() =>
   pens.value.filter(p =>
@@ -55,7 +58,7 @@ async function deletePen(id) {
   else emit('alert', '删除失败', 'error')
 }
 
-function capacityClass(p) {
+function capacityClass(p: Pen): string {
   const ratio = p.currentCount / p.capacity
   if (ratio >= 1) return 'badge-error'
   if (ratio >= 0.8) return 'badge-warning'

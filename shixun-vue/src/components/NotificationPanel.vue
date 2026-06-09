@@ -1,10 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import type { Notification } from '../types'
 
-const notifications = ref([])
-const open = ref(false)
-const unread = ref(0)
-let pollTimer = null
+const notifications = ref<Notification[]>([])
+const open = ref<boolean>(false)
+const unread = ref<number>(0)
+let pollTimer: ReturnType<typeof setInterval> | null = null
 
 async function fetchNotifications() {
   try {
@@ -36,8 +37,8 @@ onUnmounted(() => {
   document.removeEventListener('click', onDocClick)
 })
 
-function onDocClick(e) {
-  if (!e.target.closest('.notif-wrap')) closePanel()
+function onDocClick(e: MouseEvent): void {
+  if (!(e.target as Element).closest('.notif-wrap')) closePanel()
 }
 </script>
 

@@ -1,17 +1,23 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
+import type { Animal, Batch, Pen, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const animals = ref([])
-const batches = ref([])
-const pens = ref([])
-const search = ref('')
-const statusFilter = ref('')
-const showModal = ref(false)
-const editingId = ref(null)
-const form = ref({ earTag: '', gender: 'MALE', entryDate: '', breed: '', batchId: null, currentPenId: null, birthWeight: null })
+interface AnimalForm {
+  earTag: string; gender: 'MALE' | 'FEMALE'; entryDate: string; breed: string
+  batchId: number | null; currentPenId: number | null; birthWeight: number | null
+}
+
+const animals = ref<Animal[]>([])
+const batches = ref<Batch[]>([])
+const pens = ref<Pen[]>([])
+const search = ref<string>('')
+const statusFilter = ref<string>('')
+const showModal = ref<boolean>(false)
+const editingId = ref<number | null>(null)
+const form = ref<AnimalForm>({ earTag: '', gender: 'MALE', entryDate: '', breed: '', batchId: null, currentPenId: null, birthWeight: null })
 
 const filtered = computed(() =>
   animals.value.filter(a =>
@@ -58,9 +64,9 @@ async function deleteAnimal(id) {
   else emit('alert', '删除失败', 'error')
 }
 
-function today() { return new Date().toISOString().split('T')[0] }
-function genderLabel(g) { return g === 'MALE' ? '公' : '母' }
-function genderClass(g) { return g === 'MALE' ? 'badge-info' : 'badge-purple' }
+function today(): string { return new Date().toISOString().split('T')[0] }
+function genderLabel(g: 'MALE' | 'FEMALE'): string { return g === 'MALE' ? '公' : '母' }
+function genderClass(g: 'MALE' | 'FEMALE'): string { return g === 'MALE' ? 'badge-info' : 'badge-purple' }
 
 onMounted(load)
 </script>

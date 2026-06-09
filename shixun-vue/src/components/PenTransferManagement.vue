@@ -1,14 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
+import type { TransferRecord, Pen, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const records = ref([])
-const pens = ref([])
-const search = ref('')
-const showModal = ref(false)
-const form = ref({ earTag: '', toPenId: null, eventTime: '', reason: '' })
+interface TransferForm { earTag: string; toPenId: number | null; eventTime: string; reason: string }
+
+const records = ref<TransferRecord[]>([])
+const pens = ref<Pen[]>([])
+const search = ref<string>('')
+const showModal = ref<boolean>(false)
+const form = ref<TransferForm>({ earTag: '', toPenId: null, eventTime: '', reason: '' })
 
 const filtered = computed(() =>
   records.value.filter(r =>

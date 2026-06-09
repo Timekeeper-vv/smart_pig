@@ -1,15 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
+import type { DrugVaccine, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const items = ref([])
-const search = ref('')
-const categoryFilter = ref('')
-const showModal = ref(false)
-const editingId = ref(null)
-const form = ref({ category: 'VACCINE', genericName: '', specification: '', manufacturer: '' })
+interface DrugForm { category: 'DRUG' | 'VACCINE'; genericName: string; specification: string; manufacturer: string }
+
+const items = ref<DrugVaccine[]>([])
+const search = ref<string>('')
+const categoryFilter = ref<string>('')
+const showModal = ref<boolean>(false)
+const editingId = ref<number | null>(null)
+const form = ref<DrugForm>({ category: 'VACCINE', genericName: '', specification: '', manufacturer: '' })
 
 const filtered = computed(() =>
   items.value.filter(d =>

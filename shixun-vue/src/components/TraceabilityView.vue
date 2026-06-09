@@ -1,15 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import type { AnimalTraceability, BatchTraceability, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const mode = ref('animal')
-const query = ref('')
-const loading = ref(false)
-const animalResult = ref(null)
-const batchResult = ref(null)
+interface EventMeta { label: string; color: string; bg: string }
 
-const eventTypeMap = {
+const mode = ref<'animal' | 'batch'>('animal')
+const query = ref<string>('')
+const loading = ref<boolean>(false)
+const animalResult = ref<AnimalTraceability | null>(null)
+const batchResult = ref<BatchTraceability | null>(null)
+
+const eventTypeMap: Record<string, EventMeta> = {
   ENTRY:        { label: '入栏登记', color: 'var(--c-success)',  bg: 'var(--c-success-bg)' },
   IMMUNIZATION: { label: '免疫接种', color: 'var(--c-info)',     bg: 'var(--c-info-bg)' },
   MEDICATION:   { label: '用药治疗', color: 'var(--c-warning)',  bg: 'var(--c-warning-bg)' },
@@ -17,7 +20,7 @@ const eventTypeMap = {
   SLAUGHTER:    { label: '出栏登记', color: 'var(--c-error)',    bg: 'var(--c-error-bg)' },
 }
 
-async function search() {
+async function search(): Promise<void> {
   if (!query.value.trim()) { emit('alert', '请输入查询内容', 'error'); return }
   loading.value = true
   animalResult.value = null
@@ -35,19 +38,19 @@ async function search() {
   } finally { loading.value = false }
 }
 
-function getEventMeta(type) {
+function getEventMeta(type: string): EventMeta {
   return eventTypeMap[type] || { label: type, color: 'var(--c-text-2)', bg: 'var(--c-bg)' }
 }
 
-function switchMode(m) {
+function switchMode(m: 'animal' | 'batch'): void {
   mode.value = m
   query.value = ''
   animalResult.value = null
   batchResult.value = null
 }
 
-function statusLabel(s) { return s === 'ACTIVE' ? '在栏' : '已出栏' }
-function genderLabel(g) { return g === 'MALE' ? '公' : '母' }
+function statusLabel(s: string): string { return s === 'ACTIVE' ? '在栏' : '已出栏' }
+function genderLabel(g: string): string { return g === 'MALE' ? '公' : '母' }
 </script>
 
 <template>

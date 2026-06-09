@@ -1,24 +1,33 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import type { ECharts } from 'echarts'
+import type { MonthlyData, AnimalStatusData, PenUsageData } from '../types'
 
-const loading = ref(true)
-const chartsData = ref({
+interface ChartsData {
+  monthlySlaughter: MonthlyData[]
+  monthlyImmunization: MonthlyData[]
+  animalStatus: AnimalStatusData[]
+  penUsage: PenUsageData[]
+}
+
+const loading = ref<boolean>(true)
+const chartsData = ref<ChartsData>({
   monthlySlaughter: [],
   monthlyImmunization: [],
   animalStatus: [],
   penUsage: [],
 })
 
-let chartInstances = []
+let chartInstances: ECharts[] = []
 
-function disposeCharts() {
+function disposeCharts(): void {
   chartInstances.forEach(c => c?.dispose())
   chartInstances = []
 }
 
 // Pad last 6 months so empty months still show on axis
-function padMonths(data) {
+function padMonths(data: MonthlyData[]): { months: string[]; values: number[] } {
   const months = []
   for (let i = 5; i >= 0; i--) {
     const d = new Date()
@@ -82,8 +91,8 @@ function initCharts() {
   // Chart 3: Animal status pie
   const statusEl = document.getElementById('chart-status')
   if (statusEl) {
-    const statusLabels = { ACTIVE: '在栏', SOLD: '已出栏' }
-    const statusColors = { ACTIVE: '#0d9488', SOLD: '#94a3b8' }
+    const statusLabels: Record<string, string> = { ACTIVE: '在栏', SOLD: '已出栏' }
+    const statusColors: Record<string, string> = { ACTIVE: '#0d9488', SOLD: '#94a3b8' }
     const pieData = chartsData.value.animalStatus.map(r => ({
       name: statusLabels[r.status] || r.status,
       value: Number(r.count),

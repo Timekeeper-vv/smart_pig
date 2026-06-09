@@ -1,7 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import type { User } from '../types'
 
-const emit = defineEmits(['login'])
+const emit = defineEmits<{ login: [user: User] }>()
 
 const mode = ref('login')
 
@@ -60,7 +61,7 @@ async function register() {
     regMsg.value = '两次输入的密码不一致'
     return
   }
-  if (regAge.value && (isNaN(regAge.value) || Number(regAge.value) <= 0)) {
+  if (regAge.value && (isNaN(Number(regAge.value)) || Number(regAge.value) <= 0)) {
     regMsg.value = '请输入有效的年龄'
     return
   }

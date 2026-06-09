@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watchEffect } from 'vue'
+import type { User, PageName, AlertType, Role } from './types'
 import LoginPage from './components/LoginPage.vue'
 import Sidebar from './components/Sidebar.vue'
 import Dashboard from './components/Dashboard.vue'
@@ -17,7 +18,7 @@ import StatisticsView from './components/StatisticsView.vue'
 import NotificationPanel from './components/NotificationPanel.vue'
 import GlobalAlert from './components/GlobalAlert.vue'
 
-const PAGE_ROLES = {
+const PAGE_ROLES: Record<string, Role[]> = {
   dashboard:    ['admin', 'technician'],
   statistics:   ['admin', 'technician'],
   pens:         ['admin', 'feeder'],
@@ -32,25 +33,25 @@ const PAGE_ROLES = {
   users:        ['admin'],
 }
 
-function hasAccess(page, role) {
+function hasAccess(page: string, role?: Role): boolean {
   return (PAGE_ROLES[page] ?? ['admin']).includes(role || 'admin')
 }
 
-function firstAllowedPage(role) {
-  return Object.keys(PAGE_ROLES).find(p => hasAccess(p, role)) || 'animals'
+function firstAllowedPage(role: Role): PageName {
+  return (Object.keys(PAGE_ROLES).find(p => hasAccess(p, role)) || 'animals') as PageName
 }
 
-const currentUser = ref(null)
-const currentPage = ref('dashboard')
-const sidebarCollapsed = ref(false)
-const alertMsg = ref('')
-const alertType = ref('success')
-const alertVisible = ref(false)
-let alertTimer = null
+const currentUser = ref<User | null>(null)
+const currentPage = ref<PageName>('dashboard')
+const sidebarCollapsed = ref<boolean>(false)
+const alertMsg = ref<string>('')
+const alertType = ref<AlertType>('success')
+const alertVisible = ref<boolean>(false)
+let alertTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(() => {
   const saved = sessionStorage.getItem('currentUser')
-  if (saved) currentUser.value = JSON.parse(saved)
+  if (saved) currentUser.value = JSON.parse(saved) as User
 })
 
 watchEffect(() => {
@@ -61,7 +62,7 @@ watchEffect(() => {
   }
 })
 
-function showAlert(msg, type = 'success') {
+function showAlert(msg: string, type: AlertType = 'success'): void {
   alertMsg.value = msg
   alertType.value = type
   alertVisible.value = true
@@ -69,18 +70,18 @@ function showAlert(msg, type = 'success') {
   alertTimer = setTimeout(() => { alertVisible.value = false }, 3000)
 }
 
-function onLogin(user) {
+function onLogin(user: User): void {
   currentUser.value = user
   sessionStorage.setItem('currentUser', JSON.stringify(user))
   currentPage.value = 'dashboard'
 }
 
-function onLogout() {
+function onLogout(): void {
   currentUser.value = null
   sessionStorage.removeItem('currentUser')
 }
 
-const pageLabels = {
+const pageLabels: Record<string, string> = {
   dashboard:    '概览仪表盘',
   statistics:   '数据统计分析',
   pens:         '圈舍管理',

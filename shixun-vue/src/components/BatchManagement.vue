@@ -1,18 +1,24 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import type { Batch, Pen, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const batches = ref([])
-const pens = ref([])
-const search = ref('')
-const showModal = ref(false)
-const editingId = ref(null)
-const form = ref({ batchCode: '', entryDate: '', breed: '', source: '', initialPenId: null, notes: '' })
+interface BatchForm {
+  batchCode: string; entryDate: string; breed: string
+  source: string; initialPenId: number | null; notes: string
+}
+
+const batches = ref<Batch[]>([])
+const pens = ref<Pen[]>([])
+const search = ref<string>('')
+const showModal = ref<boolean>(false)
+const editingId = ref<number | null>(null)
+const form = ref<BatchForm>({ batchCode: '', entryDate: '', breed: '', source: '', initialPenId: null, notes: '' })
 
 const filtered = computed(() =>
   batches.value.filter(b =>

@@ -1,9 +1,11 @@
-<script setup>
-defineProps({
-  msg: String,
-  type: String,
-  visible: Boolean,
-})
+<script setup lang="ts">
+import type { AlertType } from '../types'
+
+defineProps<{
+  msg: string
+  type: AlertType
+  visible: boolean
+}>()
 </script>
 
 <template>

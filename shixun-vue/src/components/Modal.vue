@@ -1,11 +1,11 @@
-<script setup>
-defineProps({
-  show: Boolean,
-  title: String,
-  width: { type: String, default: '520px' },
-})
+<script setup lang="ts">
+withDefaults(defineProps<{
+  show: boolean
+  title: string
+  width?: string
+}>(), { width: '520px' })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{ close: [] }>()
 </script>
 
 <template>

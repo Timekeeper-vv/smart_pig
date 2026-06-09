@@ -1,14 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
+import type { MedicationRecord, DrugVaccine, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const records = ref([])
-const drugs = ref([])
-const search = ref('')
-const showModal = ref(false)
-const form = ref({ earTag: '', drugId: null, reason: '', eventTime: '', dosage: '', operator: '' })
+interface MedicationForm {
+  earTag: string; drugId: number | null; reason: string
+  eventTime: string; dosage: string; operator: string
+}
+
+const records = ref<MedicationRecord[]>([])
+const drugs = ref<DrugVaccine[]>([])
+const search = ref<string>('')
+const showModal = ref<boolean>(false)
+const form = ref<MedicationForm>({ earTag: '', drugId: null, reason: '', eventTime: '', dosage: '', operator: '' })
 
 const filtered = computed(() =>
   records.value.filter(r => r.earTag?.includes(search.value) || r.drugName?.includes(search.value))

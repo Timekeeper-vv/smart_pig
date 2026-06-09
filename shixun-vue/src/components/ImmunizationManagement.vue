@@ -1,17 +1,23 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import type { ImmunizationRecord, DrugVaccine, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const records = ref([])
-const vaccines = ref([])
-const search = ref('')
-const showModal = ref(false)
-const form = ref({ earTag: '', vaccineId: null, eventTime: '', dosage: '', operator: '', notes: '' })
+interface ImmunizationForm {
+  earTag: string; vaccineId: number | null; eventTime: string
+  dosage: string; operator: string; notes: string
+}
+
+const records = ref<ImmunizationRecord[]>([])
+const vaccines = ref<DrugVaccine[]>([])
+const search = ref<string>('')
+const showModal = ref<boolean>(false)
+const form = ref<ImmunizationForm>({ earTag: '', vaccineId: null, eventTime: '', dosage: '', operator: '', notes: '' })
 
 const filtered = computed(() =>
   records.value.filter(r => r.earTag?.includes(search.value) || r.vaccineName?.includes(search.value))

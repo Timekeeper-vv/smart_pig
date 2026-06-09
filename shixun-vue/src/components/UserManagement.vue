@@ -1,27 +1,30 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import Modal from './Modal.vue'
+import type { UserRecord, AlertType, Role } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const users = ref([])
-const loading = ref(false)
-const submitting = ref(false)
-const editingId = ref(null)
-const showModal = ref(false)
-const isEdit = ref(false)
-const form = ref({ id: '', username: '', age: '', email: '', phone: '', password: '', role: 'admin' })
+interface UserForm { id: string; username: string; age: string; email: string; phone: string; password: string; role: Role }
 
-const roleOptions = [
+const users = ref<UserRecord[]>([])
+const loading = ref<boolean>(false)
+const submitting = ref<boolean>(false)
+const editingId = ref<number | null>(null)
+const showModal = ref<boolean>(false)
+const isEdit = ref<boolean>(false)
+const form = ref<UserForm>({ id: '', username: '', age: '', email: '', phone: '', password: '', role: 'admin' })
+
+const roleOptions: Array<{ value: Role; label: string }> = [
   { value: 'admin',      label: '管理员' },
   { value: 'technician', label: '技术员' },
   { value: 'feeder',     label: '饲养员' },
 ]
-const roleLabelMap = { admin: '管理员', technician: '技术员', feeder: '饲养员' }
-const roleBadgeClass = { admin: 'badge-admin', technician: 'badge-tech', feeder: 'badge-feeder' }
-const searchQuery = ref('')
-const currentPage = ref(1)
-const pageSize = ref(10)
+const roleLabelMap: Record<Role, string> = { admin: '管理员', technician: '技术员', feeder: '饲养员' }
+const roleBadgeClass: Record<Role, string> = { admin: 'badge-admin', technician: 'badge-tech', feeder: 'badge-feeder' }
+const searchQuery = ref<string>('')
+const currentPage = ref<number>(1)
+const pageSize = ref<number>(10)
 
 onMounted(loadUsers)
 watch(searchQuery, () => { currentPage.value = 1 })
@@ -66,7 +69,7 @@ const pageNumbers = computed(() => {
   return [1, '...', cur - 1, cur, cur + 1, '...', total]
 })
 
-function goToPage(p) {
+function goToPage(p: number | string): void {
   if (typeof p !== 'number') return
   if (p < 1 || p > totalPages.value) return
   currentPage.value = p
@@ -78,7 +81,7 @@ function openAdd() {
   showModal.value = true
 }
 
-async function openEdit(id) {
+async function openEdit(id: number): Promise<void> {
   if (editingId.value !== null) return
   editingId.value = id
   try {
@@ -98,7 +101,7 @@ async function openEdit(id) {
 async function submitForm() {
   if (submitting.value) return
   if (!isEdit.value && !form.value.password) { emit('alert', '新增用户密码不能为空', 'error'); return }
-  const payload = {
+  const payload: Record<string, unknown> = {
     username: form.value.username,
     age: Number(form.value.age),
     email: form.value.email,

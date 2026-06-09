@@ -1,19 +1,22 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import Modal from './Modal.vue'
+import type { Product, AlertType } from '../types'
 
-const emit = defineEmits(['alert'])
+const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
-const products = ref([])
-const loading = ref(false)
-const submitting = ref(false)
-const editingId = ref(null)
-const showModal = ref(false)
-const isEdit = ref(false)
-const form = ref({ id: '', name: '', price: '', stock: '', category: '', description: '' })
-const searchQuery = ref('')
-const currentPage = ref(1)
-const pageSize = ref(10)
+interface ProductForm { id: string; name: string; price: string; stock: string; category: string; description: string }
+
+const products = ref<Product[]>([])
+const loading = ref<boolean>(false)
+const submitting = ref<boolean>(false)
+const editingId = ref<number | null>(null)
+const showModal = ref<boolean>(false)
+const isEdit = ref<boolean>(false)
+const form = ref<ProductForm>({ id: '', name: '', price: '', stock: '', category: '', description: '' })
+const searchQuery = ref<string>('')
+const currentPage = ref<number>(1)
+const pageSize = ref<number>(10)
 
 onMounted(loadProducts)
 
@@ -59,7 +62,7 @@ const pageNumbers = computed(() => {
   return [1, '...', cur - 1, cur, cur + 1, '...', total]
 })
 
-function goToPage(p) {
+function goToPage(p: number | string): void {
   if (typeof p !== 'number') return
   if (p < 1 || p > totalPages.value) return
   currentPage.value = p
@@ -71,7 +74,7 @@ function openAdd() {
   showModal.value = true
 }
 
-async function openEdit(id) {
+async function openEdit(id: number): Promise<void> {
   if (editingId.value !== null) return
   editingId.value = id
   try {

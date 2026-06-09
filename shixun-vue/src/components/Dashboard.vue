@@ -1,10 +1,14 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import type { DashboardStats, AlertType, PageName } from '../types'
 
-const emit = defineEmits(['switch-page', 'alert'])
+const emit = defineEmits<{
+  'switch-page': [page: PageName]
+  'alert': [msg: string, type?: AlertType]
+}>()
 
-const stats = ref({ animals: 0, activeAnimals: 0, pens: 0, batches: 0, drugs: 0 })
-const loading = ref(true)
+const stats = ref<DashboardStats>({ animals: 0, activeAnimals: 0, soldAnimals: 0, pens: 0, activePens: 0, batches: 0, drugs: 0 })
+const loading = ref<boolean>(true)
 
 onMounted(async () => {
   try {
@@ -35,7 +39,7 @@ onMounted(async () => {
   }
 })
 
-const shortcuts = [
+const shortcuts: Array<{ page: PageName; label: string; desc: string; icon: string; color: string }> = [
   { page: 'animals',      label: '个体档案',  desc: '查看和管理所有牲畜个体记录',   icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`, color: 'teal' },
   { page: 'batches',      label: '养殖批次',  desc: '管理牲畜养殖批次及分组',       icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`, color: 'indigo' },
   { page: 'immunization', label: '免疫记录',  desc: '记录疫苗接种情况与计划',       icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`, color: 'blue' },
