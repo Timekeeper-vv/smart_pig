@@ -469,7 +469,9 @@ onUnmounted(() => {
       </section>
 
       <!-- Feature 3 — Health Management -->
-      <section class="feature-section feature-section--dark feature-section--dark-blue anim-section">
+      <section class="feature-section feature-section--dark feature-section--dark-blue feature-section--video anim-section">
+        <video class="feat-video" src="/feature-3.mp4" autoplay muted loop playsinline></video>
+        <div class="feat-overlay"></div>
         <div class="feature-content">
           <div class="feature-badge feature-badge--blue anim-child" style="--d:0s">{{ t.f3Badge }}</div>
           <h2 class="feature-title anim-title" style="--d:0.12s">{{ t.f3Title1 }}<br/>{{ t.f3Title2 }}</h2>
@@ -521,7 +523,9 @@ onUnmounted(() => {
       </section>
 
       <!-- Feature 4 — Analytics (reversed) -->
-      <section class="feature-section feature-section--alt feature-section--dark feature-section--dark-purple anim-section">
+      <section class="feature-section feature-section--alt feature-section--dark feature-section--dark-purple feature-section--video anim-section">
+        <video class="feat-video" src="/feature-4.mp4" autoplay muted loop playsinline></video>
+        <div class="feat-overlay"></div>
         <div class="feature-visual">
           <!-- Mock analytics dashboard -->
           <div class="mock-card mock-analytics">
