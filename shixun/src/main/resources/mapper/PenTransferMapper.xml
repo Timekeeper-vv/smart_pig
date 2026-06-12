@@ -33,4 +33,36 @@
         DELETE FROM pen_transfer_records WHERE id = #{id}
     </delete>
 
+    <select id="findPage" resultType="com.example.shixun.model.PenTransferRecord">
+        SELECT ptr.*,
+            pf.pen_name as from_pen_name,
+            pt.pen_name as to_pen_name
+        FROM pen_transfer_records ptr
+        LEFT JOIN pens pf ON ptr.from_pen_id = pf.id
+        LEFT JOIN pens pt ON ptr.to_pen_id = pt.id
+        <where>
+            <if test="search != null and search != ''">
+                (ptr.ear_tag LIKE CONCAT('%', #{search}, '%')
+                OR pf.pen_name LIKE CONCAT('%', #{search}, '%')
+                OR pt.pen_name LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+        ORDER BY ptr.event_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*)
+        FROM pen_transfer_records ptr
+        LEFT JOIN pens pf ON ptr.from_pen_id = pf.id
+        LEFT JOIN pens pt ON ptr.to_pen_id = pt.id
+        <where>
+            <if test="search != null and search != ''">
+                (ptr.ear_tag LIKE CONCAT('%', #{search}, '%')
+                OR pf.pen_name LIKE CONCAT('%', #{search}, '%')
+                OR pt.pen_name LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+    </select>
+
 </mapper>

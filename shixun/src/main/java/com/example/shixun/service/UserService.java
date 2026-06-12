@@ -1,6 +1,7 @@
 package com.example.shixun.service;
 
 import com.example.shixun.mapper.UserMapper;
+import com.example.shixun.model.PageResult;
 import com.example.shixun.model.User;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -58,6 +59,14 @@ public class UserService {
     @Async
     public CompletableFuture<Boolean> delete(Long id) {
         return CompletableFuture.completedFuture(userMapper.deleteById(id) > 0);
+    }
+
+    public PageResult<User> findPage(String search, int page, int size) {
+        int offset = Math.max(0, page - 1) * size;
+        String s = (search != null && !search.isBlank()) ? search : null;
+        List<User> content = userMapper.findPage(s, offset, size);
+        long total = userMapper.countSearch(s);
+        return new PageResult<>(content, total, page, size);
     }
 
     @Async

@@ -20,16 +20,19 @@ const showModal = ref<boolean>(false)
 const form = ref<DeathForm>({ earTag: '', eventTime: '', cause: '', operator: '', notes: '' })
 
 const page = ref(1)
-const pageSize = 10
-const filtered = computed(() =>
-  records.value.filter(r => r.earTag?.includes(search.value) || (r.cause || '').includes(search.value))
-)
-const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const paginated = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+
+function onSearch() { page.value = 1; load() }
 
 async function load() {
-  const res = await fetch('/api/events/death')
-  records.value = await res.json()
+  const p = new URLSearchParams({ page: String(page.value), size: String(pageSize.value) })
+  if (search.value) p.set('search', search.value)
+  const res = await fetch(`/api/events/death?${p}`)
+  const data = await res.json()
+  records.value = data.content
+  total.value = data.total
 }
 
 function openAdd() {
@@ -81,7 +84,7 @@ onMounted(load)
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-label">累计死亡登记</div>
-        <div class="stat-num dead">{{ records.length }}</div>
+        <div class="stat-num dead">{{ total }}</div>
       </div>
     </div>
 
@@ -89,7 +92,7 @@ onMounted(load)
       <div class="toolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="search" class="search-input" placeholder="搜索耳标号或死亡原因..." />
+          <input v-model="search" class="search-input" placeholder="搜索耳标号或死亡原因..." @input="onSearch" />
         </div>
       </div>
       <div class="table-wrap">
@@ -105,7 +108,7 @@ onMounted(load)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in paginated" :key="r.id">
+            <tr v-for="r in records" :key="r.id">
               <td><code>{{ r.earTag }}</code></td>
               <td>{{ r.eventTime }}</td>
               <td>{{ r.cause || '—' }}</td>
@@ -117,16 +120,23 @@ onMounted(load)
                 </div>
               </td>
             </tr>
-            <tr v-if="paginated.length === 0">
+            <tr v-if="records.length === 0">
               <td colspan="6"><div class="empty-state"><p>暂无死亡记录</p></div></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="pagination" v-if="totalPages > 1">
-        <button class="pg-btn" :disabled="page === 1" @click="page--">‹</button>
-        <span class="pg-info">第 {{ page }} / {{ totalPages }} 页 &nbsp;共 {{ filtered.length }} 条</span>
-        <button class="pg-btn" :disabled="page === totalPages" @click="page++">›</button>
+      <div class="pagination">
+        <span class="pg-total">共 {{ total }} 条</span>
+        <button class="pg-btn" :disabled="page === 1" @click="page--; load()">‹</button>
+        <span class="pg-info">第 {{ page }} / {{ totalPages }} 页</span>
+        <button class="pg-btn" :disabled="page === totalPages" @click="page++; load()">›</button>
+        <select v-model.number="pageSize" class="pg-size" @change="page = 1; load()">
+          <option :value="5">5条/页</option>
+          <option :value="10">10条/页</option>
+          <option :value="20">20条/页</option>
+          <option :value="50">50条/页</option>
+        </select>
       </div>
     </div>
 
@@ -186,4 +196,10 @@ onMounted(load)
 }
 .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
 .pg-btn:not(:disabled):hover { border-color: var(--c-primary); color: var(--c-primary); }
+.pg-total { color: var(--c-text-3); margin-right: auto; }
+.pg-size {
+  height: 28px; padding: 0 6px; border: 1px solid var(--c-border);
+  border-radius: var(--r); font-size: 12px; color: var(--c-text);
+  background: var(--c-surface); cursor: pointer;
+}
 </style>

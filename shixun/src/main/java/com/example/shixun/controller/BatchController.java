@@ -23,8 +23,12 @@ public class BatchController {
     }
 
     @GetMapping
-    @Operation(summary = "获取所有养殖批次")
-    public List<Batch> findAll() {
+    @Operation(summary = "获取养殖批次（传page参数则返回分页结果）")
+    public Object findAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return batchService.findPage(search, page, Math.max(1, Math.min(size, 100)));
         return batchService.findAll();
     }
 

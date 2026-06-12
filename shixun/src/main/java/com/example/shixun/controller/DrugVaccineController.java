@@ -22,8 +22,13 @@ public class DrugVaccineController {
     }
 
     @GetMapping
-    @Operation(summary = "获取所有兽药/疫苗")
-    public List<DrugVaccine> findAll(@RequestParam(required = false) String category) {
+    @Operation(summary = "获取兽药/疫苗（传page参数则返回分页结果）")
+    public Object findAll(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return service.findPage(search, category, page, Math.max(1, Math.min(size, 100)));
         if (category != null && !category.isBlank()) return service.findByCategory(category);
         return service.findAll();
     }

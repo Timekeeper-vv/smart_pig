@@ -44,4 +44,31 @@
         SELECT COUNT(*) FROM batches WHERE batch_code LIKE CONCAT(#{prefix}, '%')
     </select>
 
+    <select id="findPage" resultType="com.example.shixun.model.Batch">
+        SELECT b.*, p.pen_name as initial_pen_name,
+            (SELECT COUNT(*) FROM animals WHERE batch_id = b.id) as animal_count
+        FROM batches b
+        LEFT JOIN pens p ON b.initial_pen_id = p.id
+        <where>
+            <if test="search != null and search != ''">
+                (b.batch_code LIKE CONCAT('%', #{search}, '%')
+                OR b.breed LIKE CONCAT('%', #{search}, '%')
+                OR b.source LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+        ORDER BY b.entry_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*) FROM batches b
+        <where>
+            <if test="search != null and search != ''">
+                (b.batch_code LIKE CONCAT('%', #{search}, '%')
+                OR b.breed LIKE CONCAT('%', #{search}, '%')
+                OR b.source LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+    </select>
+
 </mapper>

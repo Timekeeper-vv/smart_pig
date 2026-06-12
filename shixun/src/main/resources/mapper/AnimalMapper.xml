@@ -76,4 +76,42 @@
         DELETE FROM animals WHERE id = #{id}
     </delete>
 
+    <select id="findPage" resultType="com.example.shixun.model.Animal">
+        SELECT a.id, a.ear_tag, a.gender, DATE_FORMAT(a.entry_date,'%Y-%m-%d') as entry_date,
+            a.breed, a.batch_id, a.current_pen_id, a.birth_weight, a.status,
+            DATE_FORMAT(a.created_at,'%Y-%m-%d %H:%i:%s') as created_at,
+            b.batch_code, p.pen_name as current_pen_name
+        FROM animals a
+        LEFT JOIN batches b ON a.batch_id = b.id
+        LEFT JOIN pens p ON a.current_pen_id = p.id
+        <where>
+            <if test="search != null and search != ''">
+                (a.ear_tag LIKE CONCAT('%', #{search}, '%')
+                OR a.breed LIKE CONCAT('%', #{search}, '%')
+                OR b.batch_code LIKE CONCAT('%', #{search}, '%'))
+            </if>
+            <if test="status != null and status != ''">
+                AND a.status = #{status}
+            </if>
+        </where>
+        ORDER BY a.id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*)
+        FROM animals a
+        LEFT JOIN batches b ON a.batch_id = b.id
+        <where>
+            <if test="search != null and search != ''">
+                (a.ear_tag LIKE CONCAT('%', #{search}, '%')
+                OR a.breed LIKE CONCAT('%', #{search}, '%')
+                OR b.batch_code LIKE CONCAT('%', #{search}, '%'))
+            </if>
+            <if test="status != null and status != ''">
+                AND a.status = #{status}
+            </if>
+        </where>
+    </select>
+
 </mapper>

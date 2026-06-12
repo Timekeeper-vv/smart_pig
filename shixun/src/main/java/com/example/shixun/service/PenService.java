@@ -1,6 +1,7 @@
 package com.example.shixun.service;
 
 import com.example.shixun.mapper.PenMapper;
+import com.example.shixun.model.PageResult;
 import com.example.shixun.model.Pen;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -42,5 +43,13 @@ public class PenService {
 
     public boolean delete(Long id) {
         return penMapper.deleteById(id) > 0;
+    }
+
+    public PageResult<Pen> findPage(String search, int page, int size) {
+        int offset = Math.max(0, page - 1) * size;
+        String s = (search != null && !search.isBlank()) ? search : null;
+        List<Pen> content = penMapper.findPage(s, offset, size);
+        long total = penMapper.countSearch(s);
+        return new PageResult<>(content, total, page, size);
     }
 }

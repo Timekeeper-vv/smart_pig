@@ -135,29 +135,53 @@ function initCharts() {
         radius: ['42%', '68%'],
         center: ['50%', '45%'],
         data: pieData.length ? pieData : [{ name: '暂无数据', value: 1, itemStyle: { color: '#e2e8f0' } }],
-        label: { show: true, formatter: '{b}\n{c} 头', fontSize: 12 },
+        label: { show: true, formatter: '{b}: {d}%', fontSize: 12 },
       }],
     })
     chartInstances.push(c)
   }
 
-  // Chart 4: Pen capacity vs usage (horizontal bar)
+  // Chart 4: Pen utilization percentage (horizontal bar)
   if (chartPenEl.value) {
     const pens = chartsData.value.penUsage
     const names = pens.map(p => p.penName)
-    const caps  = pens.map(p => Number(p.capacity))
-    const counts = pens.map(p => Number(p.currentCount))
+    const utilization = pens.map(p => {
+      const cap = Number(p.capacity)
+      const cnt = Number(p.currentCount)
+      return cap > 0 ? Math.round(cnt / cap * 100) : 0
+    })
+    const barColors = utilization.map(u => u >= 100 ? '#EF4444' : u >= 80 ? '#F97316' : '#0d9488')
     const c = echarts.init(chartPenEl.value)
     c.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { top: 0, right: 0, textStyle: { fontSize: 12 } },
-      grid: { top: 28, right: 20, bottom: 36, left: 70 },
-      xAxis: { type: 'value', minInterval: 1, axisLabel: { fontSize: 11 } },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        formatter: (params: any[]) => {
+          const idx = params[0].dataIndex
+          const p = pens[idx]
+          return `${params[0].name}<br/>利用率: <b>${params[0].value}%</b><br/>存栏: ${p.currentCount} / ${p.capacity} 头`
+        },
+      },
+      grid: { top: 20, right: 60, bottom: 36, left: 80 },
+      xAxis: {
+        type: 'value', max: 100,
+        axisLabel: { fontSize: 11, formatter: '{value}%' },
+        splitLine: { lineStyle: { type: 'dashed' } },
+      },
       yAxis: { type: 'category', data: names, axisLabel: { fontSize: 11 } },
-      series: [
-        { name: '设计容量', type: 'bar', data: caps, barMaxWidth: 20, itemStyle: { color: '#E2E8F0', borderRadius: [0, 4, 4, 0] } },
-        { name: '当前存栏', type: 'bar', data: counts, barMaxWidth: 20, itemStyle: { color: '#0d9488', borderRadius: [0, 4, 4, 0] } },
-      ],
+      series: [{
+        name: '利用率',
+        type: 'bar',
+        data: utilization.map((v, i) => ({ value: v, itemStyle: { color: barColors[i], borderRadius: [0, 4, 4, 0] } })),
+        barMaxWidth: 22,
+        label: { show: true, position: 'right', formatter: '{c}%', fontSize: 11, color: '#64748B' },
+        markLine: {
+          silent: true,
+          symbol: 'none',
+          data: [{ xAxis: 80, lineStyle: { color: '#F97316', type: 'dashed', width: 1 } }],
+          label: { formatter: '80%警戒', color: '#F97316', fontSize: 11 },
+        },
+      }],
     })
     chartInstances.push(c)
   }
@@ -309,7 +333,7 @@ onUnmounted(() => {
       <!-- 圈舍容量利用率 -->
       <div class="chart-card chart-card--wide">
         <div class="chart-title">
-          <span class="dot orange"></span>圈舍容量利用率
+          <span class="dot orange"></span>圈舍利用率（%）— 橙色≥80% 红色≥100%
         </div>
         <div ref="chartPenEl" class="chart-body"></div>
       </div>

@@ -23,8 +23,13 @@ public class AnimalController {
     }
 
     @GetMapping
-    @Operation(summary = "获取所有个体档案")
-    public List<Animal> findAll() {
+    @Operation(summary = "获取个体档案（传page参数则返回分页结果）")
+    public Object findAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return animalService.findPage(search, status, page, Math.max(1, Math.min(size, 100)));
         return animalService.findAll();
     }
 

@@ -31,4 +31,34 @@
         DELETE FROM drugs_vaccines WHERE id = #{id}
     </delete>
 
+    <select id="findPage" resultType="com.example.shixun.model.DrugVaccine">
+        SELECT * FROM drugs_vaccines
+        <where>
+            <if test="category != null and category != ''">
+                category = #{category}
+            </if>
+            <if test="search != null and search != ''">
+                AND (generic_name LIKE CONCAT('%', #{search}, '%')
+                OR manufacturer LIKE CONCAT('%', #{search}, '%')
+                OR specification LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+        ORDER BY category, generic_name
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*) FROM drugs_vaccines
+        <where>
+            <if test="category != null and category != ''">
+                category = #{category}
+            </if>
+            <if test="search != null and search != ''">
+                AND (generic_name LIKE CONCAT('%', #{search}, '%')
+                OR manufacturer LIKE CONCAT('%', #{search}, '%')
+                OR specification LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+    </select>
+
 </mapper>

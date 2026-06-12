@@ -17,22 +17,36 @@ interface MedicationForm {
 const records = ref<MedicationRecord[]>([])
 const drugs = ref<DrugVaccine[]>([])
 const search = ref<string>('')
+const drugFilter = ref<string>('')
+const dateFrom = ref<string>('')
+const dateTo = ref<string>('')
 const showModal = ref<boolean>(false)
 const form = ref<MedicationForm>({ earTag: '', drugId: null, reason: '', eventTime: '', dosage: '', operator: '' })
 
-// 分页
+// 选药品后自动填充剂量（来自规格）
+watch(() => form.value.drugId, (id) => {
+  if (id) {
+    const spec = drugs.value.find(d => d.id === id)?.specification || ''
+    if (spec) form.value.dosage = spec
+  }
+})
+
 const page = ref(1)
-const pageSize = 10
-const filtered = computed(() =>
-  records.value.filter(r => r.earTag?.includes(search.value) || r.drugName?.includes(search.value))
-)
-const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const paginated = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
-function onSearch() { page.value = 1 }
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+function onSearch() { page.value = 1; load() }
 
 async function load() {
-  const [rRes, dRes] = await Promise.all([fetch('/api/events/medication'), fetch('/api/drugs-vaccines?category=DRUG')])
-  records.value = await rRes.json()
+  const p = new URLSearchParams({ page: String(page.value), size: String(pageSize.value) })
+  if (search.value) p.set('search', search.value)
+  if (drugFilter.value) p.set('drug', drugFilter.value)
+  if (dateFrom.value) p.set('dateFrom', dateFrom.value)
+  if (dateTo.value) p.set('dateTo', dateTo.value)
+  const [rRes, dRes] = await Promise.all([fetch(`/api/events/medication?${p}`), fetch('/api/drugs-vaccines?category=DRUG')])
+  const data = await rRes.json()
+  records.value = data.content
+  total.value = data.total
   drugs.value = await dRes.json()
 }
 
@@ -49,6 +63,9 @@ watch(() => props.currentUser, (u) => {
 })
 
 async function save() {
+  if (!form.value.earTag || !form.value.drugId) {
+    emit('alert', '请填写耳标号和药品', 'error'); return
+  }
   const res = await fetch('/api/events/medication', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form.value)
   })
@@ -62,10 +79,14 @@ async function deleteRecord(id) {
   load(); emit('alert', '删除成功')
 }
 
+function clearFilters() {
+  search.value = ''; drugFilter.value = ''; dateFrom.value = ''; dateTo.value = ''; page.value = 1; load()
+}
+
 function today() { return new Date().toISOString().split('T')[0] }
 
 function exportExcel() {
-  const rows = filtered.value.map(r => ({
+  const rows = records.value.map(r => ({
     耳标号: r.earTag, 药品名称: r.drugName, 用药原因: r.reason || '',
     用药日期: r.eventTime, 剂量: r.dosage || '', 执行人: r.operator || '',
   }))
@@ -82,7 +103,7 @@ function exportPDF() {
   autoTable(doc, {
     startY: 22,
     head: [['耳标号', '药品名称', '用药原因', '用药日期', '剂量', '执行人']],
-    body: filtered.value.map(r => [r.earTag, r.drugName, r.reason || '', r.eventTime, r.dosage || '', r.operator || '']),
+    body: records.value.map(r => [r.earTag, r.drugName, r.reason || '', r.eventTime, r.dosage || '', r.operator || '']),
     styles: { fontSize: 9, cellPadding: 3 },
     headStyles: { fillColor: [13, 148, 136] },
   })
@@ -118,16 +139,33 @@ onMounted(load)
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-label">用药记录总数</div>
-        <div class="stat-num warning">{{ records.length }}</div>
+        <div class="stat-num warning">{{ total }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">当前筛选条数</div>
+        <div class="stat-num">{{ total }}</div>
       </div>
     </div>
 
     <div class="table-card">
-      <div class="toolbar">
+      <div class="toolbar filter-toolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="search" class="search-input" placeholder="搜索耳标号或药品名称..." @input="onSearch" />
+          <input v-model="search" class="search-input" placeholder="搜索耳标号、药品或原因..." @input="onSearch" />
         </div>
+        <select v-model="drugFilter" class="select-filter" @change="onSearch">
+          <option value="">全部药品</option>
+          <option v-for="d in drugs" :key="d.id" :value="d.genericName">{{ d.genericName }}</option>
+        </select>
+        <div class="date-range">
+          <input v-model="dateFrom" type="date" class="date-input" title="开始日期" @change="onSearch" />
+          <span class="date-sep">至</span>
+          <input v-model="dateTo" type="date" class="date-input" title="结束日期" @change="onSearch" />
+        </div>
+        <button v-if="search || drugFilter || dateFrom || dateTo" class="btn-clear-filter" @click="clearFilters" title="清空筛选">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          清空筛选
+        </button>
       </div>
       <div class="table-wrap">
         <table>
@@ -143,7 +181,7 @@ onMounted(load)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in paginated" :key="r.id">
+            <tr v-for="r in records" :key="r.id">
               <td><code>{{ r.earTag }}</code></td>
               <td><span class="badge badge-warning">{{ r.drugName }}</span></td>
               <td class="cell-truncate">{{ r.reason || '—' }}</td>
@@ -161,7 +199,7 @@ onMounted(load)
                 </div>
               </td>
             </tr>
-            <tr v-if="paginated.length === 0">
+            <tr v-if="records.length === 0">
               <td colspan="7"><div class="empty-state"><p>暂无用药记录</p></div></td>
             </tr>
           </tbody>
@@ -184,7 +222,7 @@ onMounted(load)
           <label>药品 <span style="color:var(--c-error)">*</span></label>
           <select v-model.number="form.drugId">
             <option :value="null">— 从标准库选择 —</option>
-            <option v-for="d in drugs" :key="d.id" :value="d.id">{{ d.genericName }}</option>
+            <option v-for="d in drugs" :key="d.id" :value="d.id">{{ d.genericName }}{{ d.specification ? '（' + d.specification + '）' : '' }}</option>
           </select>
         </div>
         <div class="form-group">
@@ -192,7 +230,7 @@ onMounted(load)
           <input v-model="form.eventTime" type="date" />
         </div>
         <div class="form-group">
-          <label>剂量</label>
+          <label>剂量 <small style="color:var(--c-text-3)">（按规格自动填入，可修改）</small></label>
           <input v-model="form.dosage" placeholder="如 5mL" />
         </div>
         <div class="form-group">
@@ -218,6 +256,21 @@ onMounted(load)
 
 <style scoped>
 .header-actions { display: flex; align-items: center; gap: 8px; }
+.filter-toolbar { flex-wrap: wrap; gap: 8px; }
+.date-range { display: flex; align-items: center; gap: 6px; }
+.date-input {
+  height: 32px; padding: 0 8px; border: 1px solid var(--c-border);
+  border-radius: var(--r); font-size: 12px; color: var(--c-text);
+  background: var(--c-surface);
+}
+.date-sep { font-size: 12px; color: var(--c-text-3); }
+.btn-clear-filter {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 32px; padding: 0 10px; border: 1px solid var(--c-border);
+  border-radius: var(--r); font-size: 12px; color: var(--c-text-2);
+  background: var(--c-surface); cursor: pointer;
+}
+.btn-clear-filter:hover { border-color: var(--c-error); color: var(--c-error); }
 .cell-truncate {
   max-width: 150px; overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; color: var(--c-text-2);

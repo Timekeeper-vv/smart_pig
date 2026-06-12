@@ -3,6 +3,7 @@ package com.example.shixun.service;
 import com.example.shixun.mapper.AnimalMapper;
 import com.example.shixun.mapper.PenMapper;
 import com.example.shixun.model.Animal;
+import com.example.shixun.model.PageResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -66,5 +67,14 @@ public class AnimalService {
 
     public boolean delete(Long id) {
         return animalMapper.deleteById(id) > 0;
+    }
+
+    public PageResult<Animal> findPage(String search, String status, int page, int size) {
+        int offset = Math.max(0, page - 1) * size;
+        String s = (search != null && !search.isBlank()) ? search : null;
+        String st = (status != null && !status.isBlank()) ? status : null;
+        List<Animal> content = animalMapper.findPage(s, st, offset, size);
+        long total = animalMapper.countSearch(s, st);
+        return new PageResult<>(content, total, page, size);
     }
 }

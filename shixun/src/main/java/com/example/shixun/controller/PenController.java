@@ -22,8 +22,12 @@ public class PenController {
     }
 
     @GetMapping
-    @Operation(summary = "获取所有圈舍")
-    public List<Pen> findAll() {
+    @Operation(summary = "获取所有圈舍（传page参数则返回分页结果）")
+    public Object findAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return penService.findPage(search, page, Math.max(1, Math.min(size, 100)));
         return penService.findAll();
     }
 

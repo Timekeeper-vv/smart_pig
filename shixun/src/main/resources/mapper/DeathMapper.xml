@@ -21,4 +21,26 @@
         DELETE FROM death_records WHERE id = #{id}
     </delete>
 
+    <select id="findPage" resultType="com.example.shixun.model.DeathRecord">
+        SELECT * FROM death_records
+        <where>
+            <if test="search != null and search != ''">
+                (ear_tag LIKE CONCAT('%', #{search}, '%')
+                OR cause LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+        ORDER BY event_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*) FROM death_records
+        <where>
+            <if test="search != null and search != ''">
+                (ear_tag LIKE CONCAT('%', #{search}, '%')
+                OR cause LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+    </select>
+
 </mapper>

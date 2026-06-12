@@ -1,34 +1,36 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
-import type { Pen, AlertType } from '../types'
+import type { Pen, UserRecord, AlertType } from '../types'
 
 const emit = defineEmits<{ alert: [msg: string, type?: AlertType] }>()
 
 interface PenForm { penCode: string; penName: string; capacity: number; responsiblePerson: string; status: number }
 
 const pens = ref<Pen[]>([])
+const users = ref<UserRecord[]>([])
+const feeders = computed(() => users.value.filter(u => u.role === 'feeder'))
 const search = ref<string>('')
 const showModal = ref<boolean>(false)
 const editingId = ref<number | null>(null)
 const form = ref<PenForm>({ penCode: '', penName: '', capacity: 50, responsiblePerson: '', status: 1 })
 
 const page = ref(1)
-const pageSize = 10
-const filtered = computed(() =>
-  pens.value.filter(p =>
-    p.penCode?.includes(search.value) ||
-    p.penName?.includes(search.value) ||
-    p.responsiblePerson?.includes(search.value)
-  )
-)
-const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const paginated = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
 async function load() {
-  const res = await fetch('/api/pens')
-  pens.value = await res.json()
+  const p = new URLSearchParams({ page: String(page.value), size: String(pageSize.value) })
+  if (search.value) p.set('search', search.value)
+  const [pRes, uRes] = await Promise.all([fetch(`/api/pens?${p}`), fetch('/api/users')])
+  const pageData = await pRes.json()
+  pens.value = pageData.content
+  total.value = pageData.total
+  users.value = await uRes.json()
 }
+
+function onSearch() { page.value = 1; load() }
 
 function openAdd() {
   editingId.value = null
@@ -43,6 +45,13 @@ function openEdit(p) {
 }
 
 async function save() {
+  if (form.value.capacity < 1) { emit('alert', '容量必须大于 0', 'error'); return }
+  if (editingId.value) {
+    const pen = pens.value.find(p => p.id === editingId.value)
+    if (pen && form.value.capacity < (pen as any).currentCount) {
+      emit('alert', `容量不能小于当前存栏数（${(pen as any).currentCount} 头）`, 'error'); return
+    }
+  }
   const url = editingId.value ? `/api/pens/${editingId.value}` : '/api/pens'
   const method = editingId.value ? 'PUT' : 'POST'
   const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form.value) })
@@ -88,15 +97,15 @@ onMounted(load)
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-label">圈舍总数</div>
-        <div class="stat-num">{{ pens.length }}</div>
+        <div class="stat-num">{{ total }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">已启用</div>
+        <div class="stat-label">本页已启用</div>
         <div class="stat-num success">{{ pens.filter(p => p.status === 1).length }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">总存栏数</div>
-        <div class="stat-num primary">{{ pens.reduce((s, p) => s + p.currentCount, 0) }}</div>
+        <div class="stat-label">本页存栏数</div>
+        <div class="stat-num primary">{{ pens.reduce((s, p) => s + (p as any).currentCount, 0) }}</div>
       </div>
     </div>
 
@@ -104,7 +113,7 @@ onMounted(load)
       <div class="toolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="search" class="search-input" placeholder="搜索编号、名称或责任人..." />
+          <input v-model="search" class="search-input" placeholder="搜索编号、名称或责任人..." @input="onSearch" />
         </div>
       </div>
       <div class="table-wrap">
@@ -121,7 +130,7 @@ onMounted(load)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in paginated" :key="p.id">
+            <tr v-for="p in pens" :key="p.id">
               <td><code>{{ p.penCode }}</code></td>
               <td>{{ p.penName }}</td>
               <td>{{ p.capacity }} 头</td>
@@ -135,7 +144,7 @@ onMounted(load)
                 </div>
               </td>
             </tr>
-            <tr v-if="paginated.length === 0">
+            <tr v-if="pens.length === 0">
               <td colspan="7">
                 <div class="empty-state"><p>暂无圈舍数据</p></div>
               </td>
@@ -143,10 +152,17 @@ onMounted(load)
           </tbody>
         </table>
       </div>
-      <div class="pagination" v-if="totalPages > 1">
-        <button class="pg-btn" :disabled="page === 1" @click="page--">‹</button>
-        <span class="pg-info">第 {{ page }} / {{ totalPages }} 页 &nbsp;共 {{ filtered.length }} 条</span>
-        <button class="pg-btn" :disabled="page === totalPages" @click="page++">›</button>
+      <div class="pagination">
+        <span class="pg-total">共 {{ total }} 条</span>
+        <button class="pg-btn" :disabled="page === 1" @click="page--; load()">‹</button>
+        <span class="pg-info">第 {{ page }} / {{ totalPages }} 页</span>
+        <button class="pg-btn" :disabled="page === totalPages" @click="page++; load()">›</button>
+        <select v-model.number="pageSize" class="pg-size" @change="page = 1; load()">
+          <option :value="5">5条/页</option>
+          <option :value="10">10条/页</option>
+          <option :value="20">20条/页</option>
+          <option :value="50">50条/页</option>
+        </select>
       </div>
     </div>
 
@@ -162,11 +178,14 @@ onMounted(load)
         </div>
         <div class="form-group">
           <label>设计容量（头）</label>
-          <input v-model.number="form.capacity" type="number" min="1" />
+          <input v-model.number="form.capacity" type="number" min="1" step="1" />
         </div>
         <div class="form-group">
-          <label>责任人</label>
-          <input v-model="form.responsiblePerson" placeholder="管理员姓名" />
+          <label>责任人（饲养员）</label>
+          <select v-model="form.responsiblePerson">
+            <option value="">— 请选择饲养员 —</option>
+            <option v-for="u in feeders" :key="u.id" :value="u.username">{{ u.username }}</option>
+          </select>
         </div>
         <div class="form-group">
           <label>状态</label>
@@ -190,6 +209,7 @@ onMounted(load)
   gap: 12px; padding: 12px 16px; border-top: 1px solid var(--c-border);
   font-size: 13px; color: var(--c-text-2);
 }
+.pg-total { color: var(--c-text-3); margin-right: auto; }
 .pg-btn {
   width: 28px; height: 28px; border: 1px solid var(--c-border);
   border-radius: var(--r); background: var(--c-surface); cursor: pointer;
@@ -197,4 +217,9 @@ onMounted(load)
 }
 .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
 .pg-btn:not(:disabled):hover { border-color: var(--c-primary); color: var(--c-primary); }
+.pg-size {
+  height: 28px; padding: 0 6px; border: 1px solid var(--c-border);
+  border-radius: var(--r); font-size: 12px; color: var(--c-text);
+  background: var(--c-surface); cursor: pointer;
+}
 </style>

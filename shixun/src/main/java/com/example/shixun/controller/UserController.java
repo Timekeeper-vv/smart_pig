@@ -11,14 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -38,9 +31,13 @@ public class UserController {
     }
 
     @GetMapping
-    @Operation(summary = "获取所有用户", description = "返回全部用户列表")
+    @Operation(summary = "获取用户（传page参数则返回分页结果）")
     @ApiResponse(responseCode = "200", description = "查询成功")
-    public CompletableFuture<List<User>> findAll() {
+    public Object findAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return userService.findPage(search, page, Math.max(1, Math.min(size, 100)));
         return userService.findAll();
     }
 

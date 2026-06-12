@@ -164,6 +164,50 @@ public class FarmEventService {
         return deathMapper.deleteById(id) > 0;
     }
 
+    public PageResult<ImmunizationRecord> findImmunizationPage(String search, String vaccine, String dateFrom, String dateTo, int page, int size) {
+        int offset = Math.max(0, page - 1) * size;
+        String s = blankToNull(search), v = blankToNull(vaccine), df = blankToNull(dateFrom), dt = blankToNull(dateTo);
+        List<ImmunizationRecord> content = immunizationMapper.findPage(s, v, df, dt, offset, size);
+        long total = immunizationMapper.countSearch(s, v, df, dt);
+        return new PageResult<>(content, total, page, size);
+    }
+
+    public PageResult<MedicationRecord> findMedicationPage(String search, String drug, String dateFrom, String dateTo, int page, int size) {
+        int offset = Math.max(0, page - 1) * size;
+        String s = blankToNull(search), d = blankToNull(drug), df = blankToNull(dateFrom), dt = blankToNull(dateTo);
+        List<MedicationRecord> content = medicationMapper.findPage(s, d, df, dt, offset, size);
+        long total = medicationMapper.countSearch(s, d, df, dt);
+        return new PageResult<>(content, total, page, size);
+    }
+
+    public PageResult<PenTransferRecord> findTransferPage(String search, int page, int size) {
+        int offset = Math.max(0, page - 1) * size;
+        String s = blankToNull(search);
+        List<PenTransferRecord> content = penTransferMapper.findPage(s, offset, size);
+        long total = penTransferMapper.countSearch(s);
+        return new PageResult<>(content, total, page, size);
+    }
+
+    public PageResult<SlaughterRecord> findSlaughterPage(String search, int page, int size) {
+        int offset = Math.max(0, page - 1) * size;
+        String s = blankToNull(search);
+        List<SlaughterRecord> content = slaughterMapper.findPage(s, offset, size);
+        long total = slaughterMapper.countSearch(s);
+        return new PageResult<>(content, total, page, size);
+    }
+
+    public PageResult<DeathRecord> findDeathPage(String search, int page, int size) {
+        int offset = Math.max(0, page - 1) * size;
+        String s = blankToNull(search);
+        List<DeathRecord> content = deathMapper.findPage(s, offset, size);
+        long total = deathMapper.countSearch(s);
+        return new PageResult<>(content, total, page, size);
+    }
+
+    private static String blankToNull(String s) {
+        return (s != null && !s.isBlank()) ? s : null;
+    }
+
     private void validateAnimalActive(String earTag) {
         Animal animal = animalMapper.findByEarTag(earTag);
         if (animal == null) throw new IllegalArgumentException("耳标号不存在: " + earTag);

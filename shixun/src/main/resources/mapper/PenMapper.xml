@@ -38,4 +38,28 @@
         UPDATE pens SET current_count = GREATEST(current_count - 1, 0) WHERE id = #{penId}
     </update>
 
+    <select id="findPage" resultType="com.example.shixun.model.Pen">
+        SELECT * FROM pens
+        <where>
+            <if test="search != null and search != ''">
+                (pen_code LIKE CONCAT('%', #{search}, '%')
+                OR pen_name LIKE CONCAT('%', #{search}, '%')
+                OR responsible_person LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+        ORDER BY id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*) FROM pens
+        <where>
+            <if test="search != null and search != ''">
+                (pen_code LIKE CONCAT('%', #{search}, '%')
+                OR pen_name LIKE CONCAT('%', #{search}, '%')
+                OR responsible_person LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+    </select>
+
 </mapper>

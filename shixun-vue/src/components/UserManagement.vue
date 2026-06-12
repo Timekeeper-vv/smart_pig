@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Modal from './Modal.vue'
 import type { UserRecord, AlertType, Role } from '../types'
 
@@ -25,17 +25,21 @@ const roleBadgeClass: Record<Role, string> = { admin: 'badge-admin', technician:
 const searchQuery = ref<string>('')
 const currentPage = ref<number>(1)
 const pageSize = ref<number>(10)
+const total = ref<number>(0)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
 onMounted(loadUsers)
-watch(searchQuery, () => { currentPage.value = 1 })
-watch(pageSize, () => { currentPage.value = 1 })
 
 async function loadUsers() {
   loading.value = true
   users.value = []
   try {
-    const res = await fetch('/api/users')
-    users.value = await res.json()
+    const p = new URLSearchParams({ page: String(currentPage.value), size: String(pageSize.value) })
+    if (searchQuery.value.trim()) p.set('search', searchQuery.value.trim())
+    const res = await fetch(`/api/users?${p}`)
+    const data = await res.json()
+    users.value = data.content
+    total.value = data.total
   } catch {
     emit('alert', '加载用户失败', 'error')
   } finally {
@@ -43,37 +47,7 @@ async function loadUsers() {
   }
 }
 
-const filteredUsers = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return users.value
-  return users.value.filter(u =>
-    (u.username ?? '').toLowerCase().includes(q) ||
-    (u.email ?? '').toLowerCase().includes(q) ||
-    (u.phone ?? '').includes(q)
-  )
-})
-
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredUsers.value.length / pageSize.value)))
-
-const pagedUsers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredUsers.value.slice(start, start + pageSize.value)
-})
-
-const pageNumbers = computed(() => {
-  const total = totalPages.value
-  const cur = currentPage.value
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  if (cur <= 4) return [1, 2, 3, 4, 5, '...', total]
-  if (cur >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
-  return [1, '...', cur - 1, cur, cur + 1, '...', total]
-})
-
-function goToPage(p: number | string): void {
-  if (typeof p !== 'number') return
-  if (p < 1 || p > totalPages.value) return
-  currentPage.value = p
-}
+function onSearch() { currentPage.value = 1; loadUsers() }
 
 function openAdd() {
   form.value = { id: '', username: '', age: '', email: '', phone: '', password: '', role: 'admin' }
@@ -130,7 +104,7 @@ async function submitForm() {
   }
 }
 
-async function deleteUser(id, name) {
+async function deleteUser(id: number, name: string) {
   if (!confirm(`确定要删除用户「${name}」？此操作不可恢复。`)) return
   try {
     const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
@@ -155,8 +129,6 @@ function avatarBg(name) {
 
 function initial(name) { return name ? name.charAt(0).toUpperCase() : '?' }
 
-const rangeStart = computed(() => filteredUsers.value.length ? (currentPage.value - 1) * pageSize.value + 1 : 0)
-const rangeEnd = computed(() => Math.min(currentPage.value * pageSize.value, filteredUsers.value.length))
 </script>
 
 <template>
@@ -175,15 +147,7 @@ const rangeEnd = computed(() => Math.min(currentPage.value * pageSize.value, fil
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-label">总用户数</div>
-        <div class="stat-num primary">{{ users.length }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">筛选结果</div>
-        <div class="stat-num">{{ filteredUsers.length }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">总页数</div>
-        <div class="stat-num">{{ totalPages }}</div>
+        <div class="stat-num primary">{{ total }}</div>
       </div>
     </div>
 
@@ -191,7 +155,7 @@ const rangeEnd = computed(() => Math.min(currentPage.value * pageSize.value, fil
       <div class="toolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="searchQuery" class="search-input" placeholder="搜索用户名、邮箱或手机号..." />
+          <input v-model="searchQuery" class="search-input" placeholder="搜索用户名、邮箱或手机号..." @input="onSearch" />
         </div>
         <button class="btn btn-secondary btn-sm" @click="loadUsers" :disabled="loading">
           <svg width="13" height="13" :class="{ spinning: loading }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -231,7 +195,7 @@ const rangeEnd = computed(() => Math.min(currentPage.value * pageSize.value, fil
               </tr>
             </template>
 
-            <tr v-else-if="!pagedUsers.length">
+            <tr v-else-if="!users.length">
               <td colspan="7">
                 <div class="empty-state">
                   <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--c-border)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -240,7 +204,7 @@ const rangeEnd = computed(() => Math.min(currentPage.value * pageSize.value, fil
               </td>
             </tr>
 
-            <tr v-else v-for="u in pagedUsers" :key="u.id">
+            <tr v-else v-for="u in users" :key="u.id">
               <td><span class="text-xs text-muted font-mono">#{{ u.id }}</span></td>
               <td>
                 <div style="display:flex;align-items:center;gap:10px">
@@ -265,23 +229,16 @@ const rangeEnd = computed(() => Math.min(currentPage.value * pageSize.value, fil
         </table>
       </div>
 
-      <div class="pagination" v-if="!loading">
-        <span class="pagination-info">显示 {{ rangeStart }}–{{ rangeEnd }} 条，共 {{ filteredUsers.length }} 条</span>
-        <div class="pagination-btns">
-          <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(1)">«</button>
-          <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">‹</button>
-          <template v-for="p in pageNumbers" :key="String(p) + Math.random()">
-            <span v-if="p === '...'" style="padding:0 4px;color:var(--c-text-3)">···</span>
-            <button v-else class="page-btn" :class="{ active: p === currentPage }" @click="goToPage(p)">{{ p }}</button>
-          </template>
-          <button class="page-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-          <button class="page-btn" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
-        </div>
-        <select v-model="pageSize" class="per-page-select">
-          <option :value="5">5 条/页</option>
-          <option :value="10">10 条/页</option>
-          <option :value="20">20 条/页</option>
-          <option :value="50">50 条/页</option>
+      <div class="pagination">
+        <span class="pg-total">共 {{ total }} 条</span>
+        <button class="pg-btn" :disabled="currentPage === 1" @click="currentPage--; loadUsers()">‹</button>
+        <span class="pg-info">第 {{ currentPage }} / {{ totalPages }} 页</span>
+        <button class="pg-btn" :disabled="currentPage === totalPages" @click="currentPage++; loadUsers()">›</button>
+        <select v-model.number="pageSize" class="pg-size" @change="currentPage = 1; loadUsers()">
+          <option :value="5">5条/页</option>
+          <option :value="10">10条/页</option>
+          <option :value="20">20条/页</option>
+          <option :value="50">50条/页</option>
         </select>
       </div>
     </div>
@@ -369,4 +326,23 @@ const rangeEnd = computed(() => Math.min(currentPage.value * pageSize.value, fil
 
 .spinning { animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.pagination {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 12px; padding: 12px 16px; border-top: 1px solid var(--c-border);
+  font-size: 13px; color: var(--c-text-2);
+}
+.pg-btn {
+  width: 28px; height: 28px; border: 1px solid var(--c-border);
+  border-radius: var(--r); background: var(--c-surface); cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--c-text);
+}
+.pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+.pg-btn:not(:disabled):hover { border-color: var(--c-primary); color: var(--c-primary); }
+.pg-total { color: var(--c-text-3); margin-right: auto; }
+.pg-size {
+  height: 28px; padding: 0 6px; border: 1px solid var(--c-border);
+  border-radius: var(--r); font-size: 12px; color: var(--c-text);
+  background: var(--c-surface); cursor: pointer;
+}
 </style>

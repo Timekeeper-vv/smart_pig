@@ -71,7 +71,8 @@
 │ FR-02 兽药疫苗库│ FR-04 个体数字档案  │ FR-06 用药记录 │ FR-10 批次溯源概览             │
 │              │                  │ FR-07 转舍管理 │ FR-12 数据统计分析（ECharts）   │
 │              │                  │ FR-08 出栏管理 │ FR-13 消息通知（预警推送）        │
-│              │                  │             │ FR-14 数据导出（Excel / PDF）   │
+│              │                  │ FR-15 死亡管理 │ FR-14 数据导出（Excel / PDF）   │
+│              │                  │             │ FR-16 AI 智能咨询              │
 ├──────────────┴──────────────────┴─────────────┴───────────────────────────┤
 │                  系统管理（用户管理、登录认证、三角色权限控制 FR-11）                  │
 └──────────────────────────────────────────────────────────────────────────┘
@@ -96,11 +97,12 @@
 
 | 技术 | 版本 | 选型理由 |
 |------|------|----------|
-| **Vue 3** | 3.5.x | Composition API 组织业务逻辑更灵活，响应式系统性能优异 |
+| **Vue 3** | 3.5.34 | Composition API 组织业务逻辑更灵活，响应式系统性能优异 |
+| **TypeScript** | 6.0.3 | 全量类型约束，配合 vue-tsc 编译期发现错误，提升可维护性 |
 | **Vite** | 8.x | 极速开发服务器（HMR），比 Webpack 启动快数倍 |
-| **ECharts** | 5.x | Apache 开源图表库，支持折线、柱状、饼图等多类型，性能优秀 |
+| **ECharts** | 6.1.0 | Apache 开源图表库，支持折线、柱状、饼图等多类型，性能优秀 |
 | **SheetJS (xlsx)** | 0.18.x | 纯前端 Excel 生成与解析，零后端依赖，兼容性好 |
-| **jsPDF + AutoTable** | 2.x | 纯前端 PDF 生成，autoTable 插件支持表格自动分页 |
+| **jsPDF + AutoTable** | 4.x | 纯前端 PDF 生成，autoTable 插件支持表格自动分页 |
 | **原生 Fetch API** | — | 无需引入 Axios 等第三方库，减少依赖包体积 |
 
 ### 3.3 架构模式
@@ -177,13 +179,15 @@ App.vue（根组件，管理页面切换状态）
     └── 当前激活的业务组件（根据 currentPage 响应式切换）
         ├── Dashboard.vue
         ├── StatisticsView.vue            ← 数据统计（ECharts）
+        ├── AiChat.vue                    ← AI 智能咨询（千问大模型）
         ├── PenManagement.vue
         ├── BatchManagement.vue           ← 支持 Excel/PDF 导出
         ├── AnimalManagement.vue
-        ├── ImmunizationManagement.vue    ← 支持 Excel/PDF 导出
-        ├── MedicationManagement.vue
+        ├── ImmunizationManagement.vue    ← 支持 Excel/PDF 导出 + 批量录入
+        ├── MedicationManagement.vue      ← 支持 Excel/PDF 导出
         ├── PenTransferManagement.vue
         ├── SlaughterManagement.vue
+        ├── DeathManagement.vue           ← 死亡管理（FR-15）
         ├── DrugVaccineManagement.vue
         ├── TraceabilityView.vue
         └── UserManagement.vue
@@ -281,6 +285,33 @@ App.vue（根组件，管理页面切换状态）
 
 ---
 
+### FR-15 死亡管理
+
+记录个体死亡事件，个体状态自动同步更新。
+
+**核心功能：**
+- 录入耳标号、死亡日期、死亡原因、记录人及备注
+- 登记完成后个体状态自动变更为"死亡"，存栏统计同步减少
+- 支持按耳标号/死亡原因搜索，分页展示全量死亡台账
+- 可删除误录记录
+
+**角色权限：** 管理员 / 饲养员可见。
+
+---
+
+### FR-16 AI 智能咨询
+
+基于阿里云千问大模型的智能对话助手，嵌入系统侧边栏。
+
+**核心功能：**
+- 内置养殖场景 System Prompt，专注回答免疫方案、用药建议、养殖管理等专业问题
+- 支持多轮对话上下文保持
+- 消息气泡区分用户/AI，流畅的聊天界面
+
+**角色权限：** 管理员 / 技术员可见。
+
+---
+
 ### FR-09 个体全生命周期溯源（核心亮点功能）
 
 输入任意耳标号，系统通过 UNION ALL 跨表查询，生成该个体从入栏到出栏的**完整时间线**。
@@ -314,7 +345,9 @@ App.vue（根组件，管理页面切换状态）
 | 用药记录 | ✅ | ✅ | ✅ |
 | 转舍管理 | ✅ | ✅ | ✅ |
 | 出栏管理 | ✅ | ❌ | ✅ |
+| 死亡管理 | ✅ | ❌ | ✅ |
 | 全链路溯源 | ✅ | ✅ | ❌ |
+| AI 智能咨询 | ✅ | ✅ | ❌ |
 | 用户管理 | ✅ | ❌ | ❌ |
 
 #### 实现机制
@@ -373,7 +406,7 @@ App.vue（根组件，管理页面切换状态）
 | 预警类型 | 触发条件 | 提示级别 |
 |----------|----------|----------|
 | 存栏超容量 | 启用圈舍 `current_count >= capacity` | 警告（橙色） |
-| 免疫接种到期 | 在栏动物近30天内无接种记录 | 提示（蓝色） |
+| 免疫接种提醒 | 在栏动物近30天内无接种记录 | 提示（蓝色） |
 
 **交互设计：**
 - 角标数字实时反映未读预警数量，超过 9 条显示 `9+`
@@ -631,6 +664,8 @@ export default defineConfig({
 | 数据格式 | JSON (Content-Type: application/json) |
 | 基础路径 | `/api/` |
 | 文档 | Swagger UI: `http://localhost:8080/swagger-ui/index.html` |
+| **分页参数** | 所有列表接口均支持 `?page=1&size=10&search=关键词` 查询参数 |
+| **分页响应** | 传入 `page` 参数时返回 `PageResult<T>` 包装器（`content`、`total`、`page`、`size`、`totalPages`）；不传 `page` 则返回完整 List（向后兼容，供下拉/批量场景使用） |
 
 ### 8.2 接口清单
 
@@ -675,6 +710,13 @@ export default defineConfig({
 | GET | `/api/stats/animal-status` | 个体状态分布（在栏/已出栏） | FR-12 |
 | GET | `/api/stats/pen-usage` | 圈舍容量使用情况 | FR-12 |
 | GET | `/api/notifications` | 获取当前活跃预警通知列表 | FR-13 |
+| GET | `/api/events/death` | 获取死亡记录列表（支持分页 + 搜索） | FR-15 |
+| POST | `/api/events/death` | 登记死亡事件，自动更新个体状态 | FR-15 |
+| DELETE | `/api/events/death/{id}` | 删除死亡记录 | FR-15 |
+| POST | `/api/ai/chat` | AI 对话（接入千问大模型，支持多轮） | FR-16 |
+| DELETE | `/api/events/immunization/{id}` | 删除免疫记录 | FR-05 |
+| DELETE | `/api/events/medication/{id}` | 删除用药记录 | FR-06 |
+| DELETE | `/api/events/slaughter/{id}` | 删除出栏记录 | FR-08 |
 
 ### 8.3 溯源接口示例
 
@@ -815,9 +857,9 @@ npm run build
 
 | 成果 | 详情 |
 |------|------|
-| **功能完整性** | 14 个核心功能模块（FR-01 ~ FR-14），覆盖养殖全流程及可视化决策支持 |
-| **技术栈完整** | 前后端分离架构，Spring Boot + MyBatis + MySQL + Vue 3 + ECharts + SheetJS + jsPDF |
-| **代码规模** | 后端 10 个 Controller、8 个 Service、12 个 Mapper；前端 19 个 Vue 组件 |
+| **功能完整性** | 16 个核心功能模块（FR-01 ~ FR-16），覆盖养殖全流程及可视化决策支持 |
+| **技术栈完整** | 前后端分离架构，Spring Boot + MyBatis + MySQL + Vue 3 + TypeScript + ECharts + SheetJS + jsPDF |
+| **代码规模** | 后端 11 个 Controller、8 个 Service、12 个 Mapper；前端 21 个 Vue 组件（全量 TypeScript） |
 | **数据可靠性** | 事务原子操作 + 双重唯一性校验，核心业务数据零差错 |
 | **可视化决策** | 4 类 ECharts 图表（折线/柱状/饼图/条形图），MySQL 月度聚合查询驱动 |
 | **主动预警** | 30s 轮询通知机制，超容量、免疫到期两类预警自动推送 |
@@ -849,6 +891,8 @@ npm run build
 | ~~**数据导出**~~ | ~~支持批次台账、免疫记录导出为 Excel/PDF~~ **✅ 已实现**（见 FR-14） |
 | **移动端适配** | 响应式布局改造，支持手机端巡栏录入 |
 | **WebSocket 实时推送** | 将通知轮询升级为 WebSocket 长连接，降低延迟和请求开销 |
+| **图片存储优化** | 当前兽药疫苗图片以 Base64 存入数据库，数据量大时建议改为对象存储（OSS/MinIO），数据库仅存 URL |
+| **AI 功能扩展** | 结合历史用药/免疫数据生成个性化养殖建议，或接入语音输入方便现场录入 |
 
 ---
 
@@ -866,33 +910,53 @@ shixun_workspace/
 │       │   ├── config/
 │       │   │   ├── DataInitializer.java
 │       │   │   └── OpenApiConfig.java
-│       │   ├── controller/           # 10 个 REST 控制器
-│       │   │   ├── ...（原有8个）
-│       │   │   ├── StatisticsController.java   ← 新增
-│       │   │   └── NotificationController.java ← 新增
+│       │   ├── controller/           # 11 个 REST 控制器
+│       │   │   ├── PenController.java
+│       │   │   ├── AnimalController.java
+│       │   │   ├── BatchController.java
+│       │   │   ├── DrugVaccineController.java
+│       │   │   ├── FarmEventController.java    # 免疫/用药/转舍/出栏/死亡事件
+│       │   │   ├── UserController.java
+│       │   │   ├── TraceabilityController.java
+│       │   │   ├── StatisticsController.java
+│       │   │   ├── NotificationController.java
+│       │   │   ├── AiChatController.java       ← 千问 AI 对话
+│       │   │   └── ProductController.java
 │       │   ├── service/              # 8 个业务逻辑层
 │       │   ├── mapper/               # 12 个 MyBatis Mapper 接口
-│       │   │   ├── ...（原有11个）
-│       │   │   └── StatisticsMapper.java       ← 新增
-│       │   └── model/                # 11 个实体类
+│       │   └── model/                # 实体类 + PageResult<T> 分页包装器
 │       └── resources/
 │           ├── application.properties
-│           ├── schema.sql            # 建表 + 样本数据
+│           ├── schema.sql            # 建表 + 样本数据（含 death_records）
 │           └── mapper/               # 12 个 MyBatis XML 文件
-│               ├── ...（原有11个）
-│               └── StatisticsMapper.xml        ← 新增
-└── shixun-vue/                       # Vue 3 前端
-    ├── package.json                  # 新增 echarts / xlsx / jspdf 依赖
-    ├── vite.config.js
+└── shixun-vue/                       # Vue 3 + TypeScript 前端
+    ├── package.json                  # echarts / xlsx / jspdf / typescript 依赖
+    ├── vite.config.ts
     └── src/
-        ├── main.js
-        ├── App.vue                   # 新增 statistics 路由 + NotificationPanel
-        ├── shared.css
-        └── components/               # 19 个 Vue 组件
-            ├── ...（原有16个）
-            ├── StatisticsView.vue    ← 新增（ECharts 统计分析页）
-            ├── NotificationPanel.vue ← 新增（铃铛通知面板）
-            └── Sidebar.vue           # 新增「数据统计分析」菜单项
+        ├── main.ts
+        ├── App.vue
+        ├── types/index.ts            # 全局 TypeScript 类型定义
+        ├── style.css                 # 全局设计系统变量
+        └── components/               # 21 个 Vue 组件（全量 TypeScript）
+            ├── Modal.vue             # 通用弹窗组件
+            ├── GlobalAlert.vue       # 全局通知
+            ├── Sidebar.vue
+            ├── Dashboard.vue
+            ├── LoginPage.vue
+            ├── StatisticsView.vue    # ECharts 统计分析
+            ├── NotificationPanel.vue # 铃铛预警面板
+            ├── AiChat.vue            # AI 智能咨询
+            ├── PenManagement.vue
+            ├── BatchManagement.vue
+            ├── AnimalManagement.vue
+            ├── DrugVaccineManagement.vue
+            ├── ImmunizationManagement.vue  # 含批量录入
+            ├── MedicationManagement.vue
+            ├── PenTransferManagement.vue
+            ├── SlaughterManagement.vue
+            ├── DeathManagement.vue         # 死亡管理 FR-15
+            ├── TraceabilityView.vue
+            └── UserManagement.vue
 ```
 
 ### Git 信息
@@ -937,3 +1001,49 @@ shixun_workspace/
 - 导出范围为当前搜索筛选结果（非全量）
 - Excel 使用 SheetJS 生成 `.xlsx`；PDF 使用 jsPDF + AutoTable 生成横向布局
 - 文件名含当前日期，表头使用品牌色 `#0d9488`，适合打印留档
+
+---
+
+### v1.2 — 2026-06-12
+
+本次升级完成全面工程化改造，新增两个功能模块，并落地 TypeScript 全量迁移与服务端分页。
+
+#### 工程化：全面迁移至 TypeScript
+
+- 所有 21 个 Vue 组件改写为 `<script setup lang="ts">`，引入完整类型约束
+- 新增 `src/types/index.ts` 统一类型定义文件，规范实体类型（`Animal`、`ImmunizationRecord`、`PageResult<T>` 等）
+- 引入 `vue-tsc` 做编译期静态类型检查
+
+#### 服务端分页：全量改造（10 个管理模块）
+
+- 后端新增通用 `PageResult<T>` 响应包装器，字段：`content`、`total`、`page`、`size`、`totalPages`
+- 所有管理列表接口统一支持 `?page=X&size=Y&search=关键词` 查询参数
+- **向后兼容设计**：不传 `page` 参数时仍返回完整 `List`，供批量操作下拉选项和溯源查询等场景使用
+- 前端各组件新增「每页条数」选择器（5 / 10 / 20 / 50 条/页），分页栏样式统一
+- 改造范围：圈舍、兽药疫苗库、养殖批次、个体档案、免疫记录、用药记录、转舍管理、出栏管理、死亡管理、用户管理
+
+#### FR-15 死亡管理（新增）
+
+- 新增「死亡管理」模块，管理员 / 饲养员可见
+- 后端新增 `death_records` 表及 `/api/events/death` 系列接口
+- 登记死亡后个体状态自动变更为"死亡"，存栏统计同步更新
+- 支持按耳标号 / 死亡原因搜索，服务端分页
+
+#### FR-16 AI 智能咨询（新增）
+
+- 新增 `AiChat.vue` AI 对话面板，接入阿里云千问（Qwen）大模型 API
+- 后端 `AiChatController` 代理请求，内置养殖专业场景 System Prompt
+- 支持多轮对话，消息气泡区分用户/AI，管理员 / 技术员可见
+
+#### 用药记录导出（新增）
+
+- 在**用药记录**页面补充「导出 Excel」「导出 PDF」按钮，与批次/免疫页保持一致
+
+#### 批量免疫录入改造
+
+- 弹窗重构为「参数配置区（上）+ 动物列表（下）」全宽单列布局，消除畸形排版问题
+- 动物列表改为 5 列 CSS Grid（复选框 / 耳标号 / 圈舍 / 品种 / 免疫状态），文字不再截断
+- 修复竞态条件：改为先获取全量免疫记录后再打开弹窗，消除"已免疫"状态徽章闪烁问题
+- 移除"只显示未免疫"过滤器，改为直接在列表行内展示"已免疫"状态徽章
+- 疫苗下拉默认提示显示可选数量（`共 N 种`）
+- 确认按钮与工具栏已选计数格式统一为 `X/Y 只`

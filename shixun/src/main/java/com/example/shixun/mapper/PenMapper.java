@@ -2,6 +2,7 @@ package com.example.shixun.mapper;
 
 import com.example.shixun.model.Pen;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
@@ -14,4 +15,6 @@ public interface PenMapper {
     int deleteById(Long id);
     int incrementCount(Long penId);
     int decrementCount(Long penId);
+    List<Pen> findPage(@Param("search") String search, @Param("offset") int offset, @Param("size") int size);
+    long countSearch(@Param("search") String search);
 }

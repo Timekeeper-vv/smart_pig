@@ -23,8 +23,16 @@ public class FarmEventController {
 
     // ── 免疫记录 ──────────────────────────────────────────
     @GetMapping("/immunization")
-    @Operation(summary = "查询免疫记录（可按耳标过滤）")
-    public List<ImmunizationRecord> getImmunization(@RequestParam(required = false) String earTag) {
+    @Operation(summary = "查询免疫记录（传page参数则返回分页结果）")
+    public Object getImmunization(
+            @RequestParam(required = false) String earTag,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String vaccine,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return service.findImmunizationPage(search, vaccine, dateFrom, dateTo, page, Math.max(1, Math.min(size, 100)));
         if (earTag != null && !earTag.isBlank()) return service.findImmunizationByEarTag(earTag);
         return service.findAllImmunization();
     }
@@ -48,8 +56,16 @@ public class FarmEventController {
 
     // ── 用药记录 ──────────────────────────────────────────
     @GetMapping("/medication")
-    @Operation(summary = "查询用药记录（可按耳标过滤）")
-    public List<MedicationRecord> getMedication(@RequestParam(required = false) String earTag) {
+    @Operation(summary = "查询用药记录（传page参数则返回分页结果）")
+    public Object getMedication(
+            @RequestParam(required = false) String earTag,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String drug,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return service.findMedicationPage(search, drug, dateFrom, dateTo, page, Math.max(1, Math.min(size, 100)));
         if (earTag != null && !earTag.isBlank()) return service.findMedicationByEarTag(earTag);
         return service.findAllMedication();
     }
@@ -73,8 +89,13 @@ public class FarmEventController {
 
     // ── 转舍管理 ──────────────────────────────────────────
     @GetMapping("/transfer")
-    @Operation(summary = "查询转舍记录（可按耳标过滤）")
-    public List<PenTransferRecord> getTransfer(@RequestParam(required = false) String earTag) {
+    @Operation(summary = "查询转舍记录（传page参数则返回分页结果）")
+    public Object getTransfer(
+            @RequestParam(required = false) String earTag,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return service.findTransferPage(search, page, Math.max(1, Math.min(size, 100)));
         if (earTag != null && !earTag.isBlank()) return service.findTransferByEarTag(earTag);
         return service.findAllTransfer();
     }
@@ -98,8 +119,13 @@ public class FarmEventController {
 
     // ── 出栏管理 ──────────────────────────────────────────
     @GetMapping("/slaughter")
-    @Operation(summary = "查询出栏记录（可按耳标过滤）")
-    public List<SlaughterRecord> getSlaughter(@RequestParam(required = false) String earTag) {
+    @Operation(summary = "查询出栏记录（传page参数则返回分页结果）")
+    public Object getSlaughter(
+            @RequestParam(required = false) String earTag,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return service.findSlaughterPage(search, page, Math.max(1, Math.min(size, 100)));
         if (earTag != null && !earTag.isBlank()) return service.findSlaughterByEarTag(earTag);
         return service.findAllSlaughter();
     }
@@ -123,8 +149,13 @@ public class FarmEventController {
 
     // ── 死亡管理 ──────────────────────────────────────────
     @GetMapping("/death")
-    @Operation(summary = "查询死亡记录（可按耳标过滤）")
-    public List<DeathRecord> getDeath(@RequestParam(required = false) String earTag) {
+    @Operation(summary = "查询死亡记录（传page参数则返回分页结果）")
+    public Object getDeath(
+            @RequestParam(required = false) String earTag,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        if (page != null) return service.findDeathPage(search, page, Math.max(1, Math.min(size, 100)));
         if (earTag != null && !earTag.isBlank()) return service.findDeathByEarTag(earTag);
         return service.findAllDeath();
     }

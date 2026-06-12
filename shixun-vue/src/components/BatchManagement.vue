@@ -21,23 +21,19 @@ const showModal = ref<boolean>(false)
 const editingId = ref<number | null>(null)
 const form = ref<BatchForm>({ batchCode: '', entryDate: '', breed: '', source: '', initialPenId: null, notes: '' })
 
-// 分页
 const page = ref(1)
-const pageSize = 10
-const filtered = computed(() =>
-  batches.value.filter(b =>
-    b.batchCode?.includes(search.value) ||
-    b.breed?.includes(search.value) ||
-    b.source?.includes(search.value)
-  )
-)
-const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const paginated = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
-function onSearch() { page.value = 1 }
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+function onSearch() { page.value = 1; load() }
 
 async function load() {
-  const [bRes, pRes] = await Promise.all([fetch('/api/batches'), fetch('/api/pens/active')])
-  batches.value = await bRes.json()
+  const p = new URLSearchParams({ page: String(page.value), size: String(pageSize.value) })
+  if (search.value) p.set('search', search.value)
+  const [bRes, pRes] = await Promise.all([fetch(`/api/batches?${p}`), fetch('/api/pens/active')])
+  const pageData = await bRes.json()
+  batches.value = pageData.content
+  total.value = pageData.total
   pens.value = await pRes.json()
 }
 
@@ -76,7 +72,7 @@ async function deleteBatch(id) {
 function today() { return new Date().toISOString().split('T')[0] }
 
 function exportExcel() {
-  const rows = filtered.value.map(b => ({
+  const rows = batches.value.map(b => ({
     批次号: b.batchCode, 入栏日期: b.entryDate, 品种: b.breed,
     来源地: b.source || '', 初始圈舍: b.initialPenName || '', 存栏数: b.animalCount || 0, 备注: b.notes || '',
   }))
@@ -93,7 +89,7 @@ function exportPDF() {
   autoTable(doc, {
     startY: 22,
     head: [['批次号', '入栏日期', '品种', '来源地', '初始圈舍', '存栏数', '备注']],
-    body: filtered.value.map(b => [b.batchCode, b.entryDate, b.breed, b.source || '', b.initialPenName || '', b.animalCount || 0, b.notes || '']),
+    body: batches.value.map(b => [b.batchCode, b.entryDate, b.breed, b.source || '', b.initialPenName || '', b.animalCount || 0, b.notes || '']),
     styles: { fontSize: 9, cellPadding: 3 },
     headStyles: { fillColor: [13, 148, 136] },
   })
@@ -129,10 +125,10 @@ onMounted(load)
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-label">批次总数</div>
-        <div class="stat-num primary">{{ batches.length }}</div>
+        <div class="stat-num primary">{{ total }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">总存栏数</div>
+        <div class="stat-label">本页存栏数</div>
         <div class="stat-num">{{ batches.reduce((s, b) => s + (b.animalCount || 0), 0) }}</div>
       </div>
     </div>
@@ -159,7 +155,7 @@ onMounted(load)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="b in paginated" :key="b.id">
+            <tr v-for="b in batches" :key="b.id">
               <td><code>{{ b.batchCode }}</code></td>
               <td>{{ b.entryDate }}</td>
               <td>{{ b.breed }}</td>
@@ -174,17 +170,23 @@ onMounted(load)
                 </div>
               </td>
             </tr>
-            <tr v-if="paginated.length === 0">
+            <tr v-if="batches.length === 0">
               <td colspan="8"><div class="empty-state"><p>暂无批次数据</p></div></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <!-- 分页 -->
-      <div class="pagination" v-if="totalPages > 1">
-        <button class="pg-btn" :disabled="page === 1" @click="page--">‹</button>
-        <span class="pg-info">第 {{ page }} / {{ totalPages }} 页 &nbsp;共 {{ filtered.length }} 条</span>
-        <button class="pg-btn" :disabled="page === totalPages" @click="page++">›</button>
+      <div class="pagination">
+        <span class="pg-total">共 {{ total }} 条</span>
+        <button class="pg-btn" :disabled="page === 1" @click="page--; load()">‹</button>
+        <span class="pg-info">第 {{ page }} / {{ totalPages }} 页</span>
+        <button class="pg-btn" :disabled="page === totalPages" @click="page++; load()">›</button>
+        <select v-model.number="pageSize" class="pg-size" @change="page = 1; load()">
+          <option :value="5">5条/页</option>
+          <option :value="10">10条/页</option>
+          <option :value="20">20条/页</option>
+          <option :value="50">50条/页</option>
+        </select>
       </div>
     </div>
 
@@ -251,4 +253,10 @@ onMounted(load)
 }
 .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
 .pg-btn:not(:disabled):hover { border-color: var(--c-primary); color: var(--c-primary); }
+.pg-total { color: var(--c-text-3); margin-right: auto; }
+.pg-size {
+  height: 28px; padding: 0 6px; border: 1px solid var(--c-border);
+  border-radius: var(--r); font-size: 12px; color: var(--c-text);
+  background: var(--c-surface); cursor: pointer;
+}
 </style>

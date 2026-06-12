@@ -18,4 +18,6 @@ public interface AnimalMapper {
     int updateStatus(@Param("earTag") String earTag, @Param("status") String status);
     boolean existsByEarTag(String earTag);
     int countByEarTagPrefix(String prefix);
+    List<Animal> findPage(@Param("search") String search, @Param("status") String status, @Param("offset") int offset, @Param("size") int size);
+    long countSearch(@Param("search") String search, @Param("status") String status);
 }
