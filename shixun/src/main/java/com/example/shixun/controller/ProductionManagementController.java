@@ -244,11 +244,28 @@ public class ProductionManagementController {
         Long quoteId = jdbc.queryForObject("SELECT id FROM cost_quote WHERE quote_no=?", Long.class, quote.get("quoteNo"));
         BigDecimal unitPrice = req.unitPrice == null || req.unitPrice.compareTo(BigDecimal.ZERO)<=0 ? bd(quote.get("suggestedPrice")) : req.unitPrice;
         String orderNo = no("ORD");
+        Map<String,Object> bomMaster=bom(req.bomId);
+        String bomSnapshot=mapper.writeValueAsString(Map.of("bomNo",bomMaster.get("bomNo"),"productName",bomMaster.get("productName"),"versionNo",bomMaster.get("versionNo"),"plannedQty",bomMaster.get("plannedQty"),"targetPrice",bomMaster.get("targetPrice"),"remark",String.valueOf(bomMaster.getOrDefault("remark",""))));
+        String materialSnapshot=mapper.writeValueAsString(materialItems(req.bomId));
+        String processSnapshot=mapper.writeValueAsString(processItems(req.bomId));
         KeyHolder kh = new GeneratedKeyHolder();
-        jdbc.update(con -> { PreparedStatement ps=con.prepareStatement("INSERT INTO commercial_order(order_no,order_type,project_id,project_sku_id,bom_id,quote_id,customer_name,contact_name,contact_phone,receiver_address,quantity,unit_price,total_amount,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",Statement.RETURN_GENERATED_KEYS);
+        jdbc.update(con -> { PreparedStatement ps=con.prepareStatement("INSERT INTO commercial_order(order_no,order_type,project_id,project_sku_id,bom_id,quote_id,customer_name,contact_name,contact_phone,receiver_address,quantity,unit_price,total_amount,status,production_requirement,bom_snapshot_json,material_snapshot_json,process_snapshot_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CAST(? AS JSON),CAST(? AS JSON),CAST(? AS JSON))",Statement.RETURN_GENERATED_KEYS);
             ps.setString(1,orderNo);            ps.setString(2,req.orderType); if(req.projectId==null)ps.setNull(3,java.sql.Types.BIGINT);else ps.setLong(3,req.projectId); if(req.projectSkuId==null)ps.setNull(4,java.sql.Types.BIGINT);else ps.setLong(4,req.projectSkuId);
-            ps.setLong(5,req.bomId);ps.setLong(6,quoteId);ps.setString(7,req.customerName);ps.setString(8,req.contactName);ps.setString(9,req.contactPhone);ps.setString(10,req.receiverAddress);ps.setInt(11,qty);ps.setBigDecimal(12,unitPrice);ps.setBigDecimal(13,unitPrice.multiply(BigDecimal.valueOf(qty)));ps.setString(14,"pending_confirm");return ps;},kh);
+            ps.setLong(5,req.bomId);ps.setLong(6,quoteId);ps.setString(7,req.customerName);ps.setString(8,req.contactName);ps.setString(9,req.contactPhone);ps.setString(10,req.receiverAddress);ps.setInt(11,qty);ps.setBigDecimal(12,unitPrice);ps.setBigDecimal(13,unitPrice.multiply(BigDecimal.valueOf(qty)));ps.setString(14,"pending_confirm");ps.setString(15,req.productionRequirement);ps.setString(16,bomSnapshot);ps.setString(17,materialSnapshot);ps.setString(18,processSnapshot);return ps;},kh);
         return commercialOrder(Objects.requireNonNull(kh.getKey()).longValue());
+    }
+
+    @GetMapping("/commercial-orders/{id}")
+    public Map<String,Object> commercialOrderDetail(@PathVariable Long id) {
+        Map<String,Object> o=commercialOrder(id); Long bomId=((Number)o.get("bomId")).longValue();
+        Map<String,Object> snapshots=jdbc.queryForMap("SELECT production_requirement productionRequirement,bom_snapshot_json bomSnapshot,material_snapshot_json materialSnapshot,process_snapshot_json processSnapshot FROM commercial_order WHERE id=?",id);
+        o.put("productionRequirement",snapshots.get("productionRequirement")); o.put("bomSnapshot",jsonValue(snapshots.get("bomSnapshot"),Map.class));
+        Object materialSnapshot=snapshots.get("materialSnapshot"), processSnapshot=snapshots.get("processSnapshot");
+        o.put("materials",materialSnapshot==null?materialItems(bomId):jsonValue(materialSnapshot,List.class));
+        o.put("processes",processSnapshot==null?processItems(bomId):jsonValue(processSnapshot,List.class));
+        Object quoteId=o.get("quoteId");
+        if(quoteId!=null) o.put("quote",jdbc.queryForMap("SELECT id,quote_no quoteNo,quantity,material_cost materialCost,process_cost processCost,packaging_cost packagingCost,overhead_cost overheadCost,total_cost totalCost,unit_cost unitCost,suggested_price suggestedPrice,gross_margin_rate grossMarginRate,created_at createdAt FROM cost_quote WHERE id=?",quoteId));
+        return o;
     }
 
     @PostMapping("/commercial-orders/{id}/confirm")
@@ -283,11 +300,11 @@ public class ProductionManagementController {
     }
 
     private List<Map<String, Object>> materialItems(Long bomId) {
-        return jdbc.queryForList("SELECT i.id, i.material_id materialId, m.material_code materialCode, m.name, m.category, m.unit, i.qty, i.loss_rate lossRate, i.unit_cost unitCost, m.stock_qty stockQty FROM bom_material_item i JOIN material m ON i.material_id=m.id WHERE i.bom_id=? ORDER BY i.id", bomId);
+        return jdbc.queryForList("SELECT i.id, i.material_id materialId, m.material_code materialCode, m.name, m.category, m.unit, i.qty, i.loss_rate lossRate, i.unit_cost unitCost, i.remark, m.stock_qty stockQty FROM bom_material_item i JOIN material m ON i.material_id=m.id WHERE i.bom_id=? ORDER BY i.id", bomId);
     }
 
     private List<Map<String, Object>> processItems(Long bomId) {
-        return jdbc.queryForList("SELECT i.id, i.process_id processId, p.process_code processCode, p.name, p.category, p.unit, i.qty, i.unit_cost unitCost, i.standard_hours standardHours FROM bom_process_item i JOIN craft_process p ON i.process_id=p.id WHERE i.bom_id=? ORDER BY i.id", bomId);
+        return jdbc.queryForList("SELECT i.id, i.process_id processId, p.process_code processCode, p.name, p.category, p.unit, i.qty, i.unit_cost unitCost, i.standard_hours standardHours, i.remark FROM bom_process_item i JOIN craft_process p ON i.process_id=p.id WHERE i.bom_id=? ORDER BY i.id", bomId);
     }
 
     private Long createBom(String name, Long skuId, Long assetId, Integer plannedQty, BigDecimal targetPrice) {
@@ -321,6 +338,12 @@ public class ProductionManagementController {
         }
     }
 
+    private <T> T jsonValue(Object value, Class<T> type) {
+        if(value==null)return null;
+        try { if(value instanceof byte[]) return mapper.readValue((byte[])value,type); return mapper.readValue(String.valueOf(value),type); }
+        catch(Exception e){ throw new IllegalStateException("订单生产快照解析失败",e); }
+    }
+
     private Long count(String table) { return jdbc.queryForObject("SELECT COUNT(*) FROM " + table, Long.class); }
     private BigDecimal bd(Object o) { if (o == null) return BigDecimal.ZERO; if (o instanceof BigDecimal) return (BigDecimal) o; if (o instanceof Number) return BigDecimal.valueOf(((Number)o).doubleValue()); return new BigDecimal(String.valueOf(o)); }
     private String no(String prefix) { return prefix + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + (int)(Math.random()*900+100); }
@@ -332,5 +355,5 @@ public class ProductionManagementController {
     public static class BomEditRequest { public String productName; public Integer plannedQty; public BigDecimal targetPrice; public String remark; public List<BomMaterialEdit> materials; public List<BomProcessEdit> processes; }
     public static class BomMaterialEdit { public Long materialId; public BigDecimal qty; public BigDecimal lossRate; public String remark; }
     public static class BomProcessEdit { public Long processId; public BigDecimal qty; public String remark; }
-    public static class CommercialOrderRequest { public String orderType; public Long projectId; public Long projectSkuId; public Long bomId; public Integer quantity; public BigDecimal unitPrice; public BigDecimal targetMarginRate; public String customerName; public String contactName; public String contactPhone; public String receiverAddress; }
+    public static class CommercialOrderRequest { public String orderType; public Long projectId; public Long projectSkuId; public Long bomId; public Integer quantity; public BigDecimal unitPrice; public BigDecimal targetMarginRate; public String customerName; public String contactName; public String contactPhone; public String receiverAddress; public String productionRequirement; }
 }

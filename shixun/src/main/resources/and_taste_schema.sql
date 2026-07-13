@@ -952,3 +952,10 @@ CREATE TABLE IF NOT EXISTS commercial_order (
     CONSTRAINT fk_co_sample FOREIGN KEY(sample_id) REFERENCES sample_order(id) ON DELETE SET NULL,
     CONSTRAINT fk_co_production FOREIGN KEY(production_order_id) REFERENCES production_order(id) ON DELETE SET NULL
 ) COMMENT='项目制开发统一商业订单';
+
+-- ORDER_PRODUCTION_SNAPSHOT_V4
+-- 每张订单固化创建时的人工生产要求、物料和工艺，历史订单不受后续BOM修改影响。
+ALTER TABLE commercial_order ADD COLUMN production_requirement TEXT NULL;
+ALTER TABLE commercial_order ADD COLUMN bom_snapshot_json JSON NULL;
+ALTER TABLE commercial_order ADD COLUMN material_snapshot_json JSON NULL;
+ALTER TABLE commercial_order ADD COLUMN process_snapshot_json JSON NULL;
