@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -135,7 +137,7 @@ public class CreativeAiController {
             String localUrl = saveRemoteImage(remoteUrl, "ai-2d-", ".png");
             Long assetId = createAsset(req.title == null || req.title.isBlank() ? "AI生成图片" : req.title, "image", "ai_generated", localUrl, localUrl, finalPrompt, negative, req.styleId, null, "png", req.tags, Map.of("provider", "siliconflow", "model", imageModel, "remoteUrl", remoteUrl));
             jdbc.update("UPDATE ai_generation_job SET status='succeeded', output_asset_id=? WHERE id=?", assetId, jobId);
-            return Map.of("jobNo", jobNo, "assetId", assetId, "imageUrl", localUrl, "prompt", finalPrompt, "negativePrompt", negative, "status", "succeeded");
+            return Map.of("jobNo", jobNo, "assetId", assetId, "imageUrl", localUrl, "previewUrl", localUrl, "fileUrl", localUrl, "prompt", finalPrompt, "negativePrompt", negative, "status", "succeeded", "source", "siliconflow:" + imageModel, "model", imageModel);
         } catch (Exception e) {
             jdbc.update("UPDATE ai_generation_job SET status='failed', error_message=? WHERE id=?", e.getMessage(), jobId);
             throw e;
@@ -252,6 +254,24 @@ public class CreativeAiController {
                 Map.of("uploadName", original, "size", file.getSize(), "contentType", file.getContentType() == null ? "" : file.getContentType())
         );
         return Map.of("assetId", assetId, "url", url, "title", title == null || title.isBlank() ? original : title);
+    }
+
+    @GetMapping("/assets/{id}/content")
+    public ResponseEntity<byte[]> assetContent(@PathVariable Long id) throws Exception {
+        Map<String,Object> asset=jdbc.queryForMap("SELECT file_url fileUrl,preview_url previewUrl,format FROM digital_asset WHERE id=?",id);
+        String url=String.valueOf(asset.get("fileUrl")==null?asset.get("previewUrl"):asset.get("fileUrl"));
+        if(url.startsWith("http://")||url.startsWith("https://")) {
+            HttpResponse<byte[]> response=http.send(HttpRequest.newBuilder().uri(URI.create(url)).GET().build(),HttpResponse.BodyHandlers.ofByteArray());
+            if(response.statusCode()<200||response.statusCode()>=300) throw new IOException("读取图片失败 HTTP "+response.statusCode());
+            String ct=response.headers().firstValue("content-type").orElse("image/png");
+            return ResponseEntity.ok().cacheControl(CacheControl.noStore()).contentType(MediaType.parseMediaType(ct)).body(response.body());
+        }
+        Path publicDir=Path.of(System.getProperty("user.dir"),"..","shixun-vue","public").normalize().toAbsolutePath();
+        String relative=url.startsWith("/")?url.substring(1):url; Path file=publicDir.resolve(relative).normalize();
+        if(!file.startsWith(publicDir)||!Files.exists(file)) throw new IOException("图片文件不存在："+url);
+        String lower=file.getFileName().toString().toLowerCase(Locale.ROOT);
+        MediaType type=lower.endsWith(".jpg")||lower.endsWith(".jpeg")?MediaType.IMAGE_JPEG:lower.endsWith(".webp")?MediaType.parseMediaType("image/webp"):MediaType.IMAGE_PNG;
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).contentType(type).body(Files.readAllBytes(file));
     }
 
     @GetMapping("/assets")

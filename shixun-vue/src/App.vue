@@ -5,13 +5,8 @@ import LoginPage from './components/LoginPage.vue'
 import Sidebar from './components/Sidebar.vue'
 import CreativeDashboard from './components/CreativeDashboard.vue'
 import CreativeStudio from './components/CreativeStudio.vue'
-import MarketingAssistant from './components/MarketingAssistant.vue'
-import BusinessAssistant from './components/BusinessAssistant.vue'
-import CommercialMvp from './components/CommercialMvp.vue'
 import ScaleUpPlatform from './components/ScaleUpPlatform.vue'
 import ProductionManagement from './components/ProductionManagement.vue'
-import ArtworkMarketplace from './components/ArtworkMarketplace.vue'
-import CreativeOrderCenter from './components/CreativeOrderCenter.vue'
 import LogisticsTracking from './components/LogisticsTracking.vue'
 import WarehouseManagement from './components/WarehouseManagement.vue'
 import DesignerCenter from './components/DesignerCenter.vue'
@@ -23,14 +18,12 @@ import AiChat from './components/AiChat.vue'
 const PAGE_ROLES: Record<string, Role[]> = {
   dashboard:    ['admin', 'technician', 'feeder'],
   studio:       ['admin', 'technician'],
-  marketing:    ['admin', 'technician'],
-  businessAi:   ['admin', 'technician'],
-  commercialMvp:['admin', 'technician'],
   scaleUp:      ['admin', 'technician'],
   production:   ['admin', 'technician'],
-  marketplace:  ['admin', 'technician', 'feeder'],
-  orders:       ['admin', 'technician', 'feeder'],
+  sampleProduction:['admin', 'technician'],
+  bulkProduction:['admin', 'technician'],
   logistics:    ['admin', 'technician'],
+  warehouseLogistics:['admin', 'technician'],
   warehouse:    ['admin', 'technician'],
   designers:    ['admin', 'technician'],
   users:        ['admin'],
@@ -84,16 +77,14 @@ function onLogout(): void {
 
 const pageLabels: Record<string, string> = {
   dashboard:    '经营看板',
-  studio:       'AI设计工坊',
-  marketing:    '营销文案',
-  businessAi:   '报价/物流助手',
-  commercialMvp:'询盘到报价',
-  scaleUp:      '项目制开发',
-  production:   'BOM/打样生产',
-  marketplace:  'IP商城',
-  orders:       '订单履约',
+  studio:       '创意设计',
+  scaleUp:      '生产管理',
+  production:   '智能成本核算引擎',
+  sampleProduction:'产品打样管理',
+  bulkProduction:'大货生产管理',
   logistics:    '物流跟踪',
-  warehouse:    '智能仓储',
+  warehouseLogistics:'仓储与物流管理',
+  warehouse:    '智能库存预警与出入库',
   designers:    '设计师/创作者',
   users:        '账号权限',
 }
@@ -147,15 +138,13 @@ const pageLabels: Record<string, string> = {
       <main class="app-main">
         <CreativeDashboard    v-if="currentPage === 'dashboard'"   @switch-page="p => { if (hasAccess(p, currentUser?.role)) currentPage = p as PageName }" @alert="showAlert" />
         <CreativeStudio       v-if="currentPage === 'studio'"      @alert="showAlert" />
-        <MarketingAssistant   v-if="currentPage === 'marketing'"   @alert="showAlert" />
-        <BusinessAssistant    v-if="currentPage === 'businessAi'"  @alert="showAlert" />
-        <CommercialMvp       v-if="currentPage === 'commercialMvp'" @alert="showAlert" />
         <ScaleUpPlatform     v-if="currentPage === 'scaleUp'" @alert="showAlert" />
-        <ProductionManagement v-if="currentPage === 'production'"  @alert="showAlert" />
-        <ArtworkMarketplace   v-if="currentPage === 'marketplace'" @alert="showAlert" />
-        <CreativeOrderCenter  v-if="currentPage === 'orders'"      @alert="showAlert" />
+        <ProductionManagement v-if="currentPage === 'production'" initial-view="cost" @alert="showAlert" />
+        <ProductionManagement v-if="currentPage === 'sampleProduction'" initial-view="sample" @alert="showAlert" />
+        <ProductionManagement v-if="currentPage === 'bulkProduction'" initial-view="bulk" @alert="showAlert" />
         <LogisticsTracking    v-if="currentPage === 'logistics'"  @alert="showAlert" />
-        <WarehouseManagement v-if="currentPage === 'warehouse'"  @alert="showAlert" />
+        <WarehouseManagement v-if="currentPage === 'warehouseLogistics'" initial-view="inventory" @alert="showAlert" />
+        <WarehouseManagement v-if="currentPage === 'warehouse'" initial-view="alerts" @alert="showAlert" />
         <DesignerCenter       v-if="currentPage === 'designers'"   @alert="showAlert" />
         <UserManagement       v-if="currentPage === 'users'"       @alert="showAlert" />
       </main>

@@ -188,7 +188,7 @@ onMounted(load)
           <div class="fulfill-step" :class="{done:currentLink?.warehouseOutboundId}"><b>出库/拣货</b><span>{{currentLink?.warehouseOutboundNo || '待出库'}} {{currentLink?.warehouseOutboundStatus ? ' / '+currentLink.warehouseOutboundStatus : ''}}</span><button class="mini primary-mini" :disabled="loading || !currentLink?.warehouseInboundId || !!currentLink?.warehouseOutboundId" @click="outboundWarehouse">创建出库拣货</button></div>
           <div class="fulfill-step"><b>真实物流</b><span>拣货完成后，到“物流跟踪”录入真实快递单号</span><button class="mini" disabled>去物流跟踪录单号</button></div>
         </div>
-        <div class="flow-note"><b>说明：</b>生产单会进入「BOM/打样生产」，入库/出库会进入「智能仓储」，真实快递轨迹在「物流跟踪」里查。</div>
+        <div class="flow-note"><b>说明：</b>生产单会进入「智能成本核算引擎」，入库/出库会进入「智能仓储」，真实快递轨迹在「物流跟踪」里查。</div>
       </template>
     </section>
 

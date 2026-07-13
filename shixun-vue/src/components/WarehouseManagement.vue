@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+const props=withDefaults(defineProps<{initialView?:'inventory'|'alerts'|'inbound'|'pick'|'outbound'}>(),{initialView:'inventory'})
 const emit = defineEmits<{ alert: [msg: string, type?: 'success' | 'error'] }>()
-const active = ref<'inventory'|'inbound'|'outbound'|'pick'|'alerts'>('inventory')
+const active = ref<'inventory'|'inbound'|'outbound'|'pick'|'alerts'>(props.initialView)
 const loading = ref(false)
 const dashboard = ref<any>({})
 const locations = ref<any[]>([])
@@ -25,11 +26,11 @@ async function runAiReport(){ loading.value=true; try{ aiReport.value=await post
 function money(v:any){ return Number(v||0).toFixed(2) }
 function statusText(s:string){ return ({pending:'待拣货',picking:'拣货中',done:'已完成',shipped:'已出库',cancelled:'已取消'} as any)[s] || s }
 function levelText(s:string){ return ({critical:'严重',warning:'预警',info:'提示'} as any)[s] || s }
-onMounted(load)
+onMounted(()=>{active.value=props.initialView;load()})
 </script>
 <template>
   <div class="page warehouse-page">
-    <div class="page-header warehouse-hero"><div><p class="eyebrow">SMART WAREHOUSE</p><h2 class="page-title">智能仓储</h2><p class="page-desc">真实仓储流程：入库增加库存，出库生成拣货任务，拣货完成后扣减库存，并自动做缺货/低库存/超储预警。</p></div><button class="btn btn-secondary" :disabled="loading" @click="load">刷新</button></div>
+    <div class="page-header warehouse-hero"><div><p class="eyebrow">SMART WAREHOUSE</p><h2 class="page-title">智能库存预警与出入库</h2><p class="page-desc">统一管理库存预警、生产入库、订单出库和拣货执行；入库增加库存，出库锁定库存，拣货完成后正式扣减。</p></div><button class="btn btn-secondary" :disabled="loading" @click="load">刷新</button></div>
     <div class="stats-row"><div class="stat-card"><div class="stat-label">库存品类</div><div class="stat-num primary">{{dashboard.itemCount??'-'}}</div></div><div class="stat-card"><div class="stat-label">总库存</div><div class="stat-num success">{{money(dashboard.totalStock)}}</div></div><div class="stat-card"><div class="stat-label">可用库存</div><div class="stat-num warning">{{money(dashboard.availableStock)}}</div></div><div class="stat-card"><div class="stat-label">待拣货</div><div class="stat-num purple">{{dashboard.pendingPick??'-'}}</div></div><div class="stat-card"><div class="stat-label">预警</div><div class="stat-num info">{{dashboard.alertCount??'-'}}</div></div></div>
     <div class="tabs"><button :class="{active:active==='inventory'}" @click="active='inventory'">库存台账</button><button :class="{active:active==='inbound'}" @click="active='inbound'">入库</button><button :class="{active:active==='outbound'}" @click="active='outbound'">出库</button><button :class="{active:active==='pick'}" @click="active='pick'">拣货任务</button><button :class="{active:active==='alerts'}" @click="active='alerts'">智能预警</button></div>
 

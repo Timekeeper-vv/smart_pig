@@ -63,7 +63,7 @@ onMounted(load)
     <div class="page-header scale-hero">
       <div>
         <p class="eyebrow">STEP 2 + STEP 3 · 设计生产与商业化</p>
-        <h2 class="page-title">项目制开发与SaaS运营</h2>
+        <h2 class="page-title">生产管理</h2>
         <p class="page-desc">把一个文创主题做成“可企划、可拆SKU、可评审、可打样、可生产”的项目；同时保留商家套餐、模板市场和用量统计。</p>
       </div>
       <button class="btn btn-secondary" :disabled="loading" @click="load">刷新</button>
@@ -73,7 +73,7 @@ onMounted(load)
     <div v-if="loadingText" class="loading-banner">{{loadingText}}</div>
 
     <div class="mode-tabs">
-      <button :class="{active:active==='projects'}" @click="active='projects'"><b>设计到生产项目</b><span>建项目 → SKU → 打样生产</span></button>
+      <button :class="{active:active==='projects'}" @click="active='projects'"><b>生产项目</b><span>建项目 → SKU → 打样生产</span></button>
       <button :class="{active:active==='saas'||active==='templates'||active==='usage'}" @click="active='saas'"><b>SaaS运营后台</b><span>商家套餐 → 模板 → 用量</span></button>
     </div>
     <div v-if="active==='saas'||active==='templates'||active==='usage'" class="sub-tabs"><button :class="{active:active==='saas'}" @click="active='saas'">商家/套餐</button><button :class="{active:active==='templates'}" @click="active='templates'">模板市场</button><button :class="{active:active==='usage'}" @click="active='usage'">用量统计</button></div>

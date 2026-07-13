@@ -1,102 +1,22 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-
-const emit = defineEmits<{ 'switch-page': [page: string], alert: [msg: string, type?: 'success' | 'error'] }>()
-const loading = ref(false)
-const data = ref<any>({ hotArtworks: [], latestOrders: [] })
-
-async function load() {
-  loading.value = true
-  try {
-    const res = await fetch('/api/creative/dashboard')
-    if (!res.ok) throw new Error(await res.text())
-    data.value = await res.json()
-  } catch (e: any) {
-    emit('alert', `加载文创概览失败：${e.message || e}`, 'error')
-  } finally {
-    loading.value = false
-  }
-}
+import { computed,onMounted,ref } from 'vue'
+const emit=defineEmits<{'switch-page':[page:string],alert:[msg:string,type?:'success'|'error']}>()
+const loading=ref(false),production=ref<any>({}),warehouse=ref<any>({}),logistics=ref<any>({}),workbench=ref<any>({orders:[],sources:[]}),assets=ref<any[]>([])
+const orders=computed(()=>workbench.value.orders||[])
+const statusCount=(s:string)=>orders.value.filter((x:any)=>x.status===s).length
+const amount=computed(()=>orders.value.reduce((n:number,x:any)=>n+Number(x.totalAmount||0),0))
+const recentOrders=computed(()=>orders.value.slice(0,6))
+const statusText:any={pending_confirm:'待确认',confirmed:'待下达',producing:'生产中',ready_to_ship:'待发货',shipped:'已发货',completed:'已完成'}
+async function json(url:string){const r=await fetch(url);if(!r.ok)throw new Error(await r.text());return r.json()}
+async function load(){loading.value=true;try{const [p,w,l,wb,a]=await Promise.all([json('/api/production/dashboard'),json('/api/warehouse/dashboard'),json('/api/logistics/dashboard'),json('/api/production/workbench'),json('/api/creative/ai/assets')]);production.value=p;warehouse.value=w;logistics.value=l;workbench.value=wb;assets.value=a}catch(e:any){emit('alert','经营看板加载失败：'+e.message,'error')}finally{loading.value=false}}
+function go(p:string){emit('switch-page',p)}
 onMounted(load)
 </script>
-
-<template>
-  <div class="page creative-page">
-    <div class="page-header hero-admin">
-      <div>
-        <p class="eyebrow">AND TASTE CREATIVE COMMERCE</p>
-        <h2 class="page-title">之间味道 · 文创设计售卖平台</h2>
-        <p class="page-desc">围绕图片IP、衍生SKU、创作者收益和订单履约搭建的数字文创经营后台。</p>
-      </div>
-      <button class="btn btn-primary" @click="emit('switch-page', 'marketplace')">进入图片IP商城</button>
-    </div>
-
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">图片IP</div><div class="stat-num primary">{{ data.artworkCount ?? '-' }}</div></div>
-      <div class="stat-card"><div class="stat-label">文创SKU</div><div class="stat-num success">{{ data.skuCount ?? '-' }}</div></div>
-      <div class="stat-card"><div class="stat-label">设计师</div><div class="stat-num purple">{{ data.designerCount ?? '-' }}</div></div>
-      <div class="stat-card"><div class="stat-label">订单数</div><div class="stat-num warning">{{ data.orderCount ?? '-' }}</div></div>
-      <div class="stat-card"><div class="stat-label">成交额</div><div class="stat-num info">¥{{ Number(data.revenue || 0).toFixed(2) }}</div></div>
-    </div>
-
-    <div class="creative-grid-2">
-      <section class="panel-card">
-        <div class="panel-head">
-          <div><h3>热门图片IP</h3><p>按收藏与浏览热度排序</p></div>
-          <button class="btn btn-secondary btn-sm" @click="emit('switch-page', 'marketplace')">查看全部</button>
-        </div>
-        <div v-if="loading" class="empty">加载中...</div>
-        <div v-else class="hot-list">
-          <div v-for="item in data.hotArtworks" :key="item.id" class="hot-item">
-            <img :src="item.imageUrl" alt="" />
-            <div>
-              <strong>{{ item.title }}</strong>
-              <span>{{ item.categoryName }} · {{ item.designerName }}</span>
-              <small>浏览 {{ item.viewCount }} · 收藏 {{ item.favoriteCount }}</small>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel-card">
-        <div class="panel-head">
-          <div><h3>业务模型重构</h3><p>从养殖管理转为图片类文创电商</p></div>
-        </div>
-        <div class="model-flow">
-          <div><b>图片IP</b><span>作品、分类、标签、授权</span></div>
-          <i>→</i>
-          <div><b>文创SKU</b><span>明信片、装饰画、手机壳等</span></div>
-          <i>→</i>
-          <div><b>交易订单</b><span>下单、支付、履约、评价</span></div>
-          <i>→</i>
-          <div><b>设计师收益</b><span>分成、结算、提现扩展</span></div>
-        </div>
-      </section>
-    </div>
-  </div>
-</template>
-
-<style scoped>
-.creative-page { background: #f8fafc; min-height: calc(100vh - var(--header-h)); }
-.hero-admin { padding: 28px; border-radius: 20px; color: #fff; background: radial-gradient(circle at 20% 20%, rgba(255,255,255,.22), transparent 24%), linear-gradient(135deg, #111827, #7c2d12 45%, #111827); box-shadow: var(--shadow-md); }
-.hero-admin .page-title { color:#fff; font-size: 28px; }
-.hero-admin .page-desc { color: rgba(255,255,255,.78); }
-.eyebrow { margin: 0 0 8px; font-size: 12px; letter-spacing: 2px; color: #fed7aa; font-weight: 800; }
-.creative-grid-2 { display:grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
-.panel-card { background:#fff; border:1px solid var(--c-border); border-radius: 18px; padding: 20px; box-shadow: var(--shadow-sm); }
-.panel-head { display:flex; justify-content:space-between; gap:12px; margin-bottom:16px; }
-.panel-head h3 { margin:0 0 4px; font-size:17px; }
-.panel-head p { margin:0; color:var(--c-text-2); font-size:13px; }
-.hot-list { display:flex; flex-direction:column; gap:12px; }
-.hot-item { display:flex; gap:12px; padding:10px; border:1px solid #eef2f7; border-radius:14px; }
-.hot-item img { width:88px; height:58px; object-fit:cover; border-radius:10px; }
-.hot-item div { display:flex; flex-direction:column; gap:4px; }
-.hot-item span, .hot-item small { color:var(--c-text-2); font-size:12px; }
-.model-flow { display:flex; flex-direction:column; gap:10px; }
-.model-flow div { padding:14px; border-radius:14px; background:#fff7ed; border:1px solid #fed7aa; }
-.model-flow b { display:block; color:#9a3412; margin-bottom:4px; }
-.model-flow span { color:#64748b; font-size:13px; }
-.model-flow i { text-align:center; color:#f97316; font-style:normal; font-weight:800; }
-.empty { color:var(--c-text-2); padding:24px; text-align:center; }
-@media (max-width: 900px){ .creative-grid-2 { grid-template-columns:1fr; } }
-</style>
+<template><div class="page dashboard-page">
+<header class="classic-hero"><div><p>AND TASTE · BUSINESS COMMAND CENTER</p><h2>经营看板</h2><span>围绕创意设计、生产核算、打样大货、仓储库存和物流履约的全链路经营总览。</span></div><div><button class="btn" @click="load">{{loading?'刷新中…':'刷新数据'}}</button><button class="btn primary" @click="go('studio')">开始创意设计</button></div></header>
+<section class="core-stats"><article><span>商业订单</span><b>{{orders.length}}</b><small>统一打样与大货订单</small></article><article><span>订单金额</span><b>¥{{amount.toFixed(2)}}</b><small>当前商业订单总额</small></article><article><span>生产中</span><b>{{statusCount('producing')}}</b><small>打样与大货生产任务</small></article><article><span>待发货</span><b>{{statusCount('ready_to_ship')}}</b><small>可进入物流绑定</small></article><article><span>库存预警</span><b class="danger">{{warehouse.alertCount||0}}</b><small>缺货、低库存与超储</small></article><article><span>物流异常</span><b class="danger">{{logistics.exceptionCount||0}}</b><small>需要立即跟进</small></article></section>
+<div class="quick-grid"><button @click="go('studio')"><i>01</i><b>创意设计</b><span>2D生图、3D辅助建模、智能评估</span></button><button @click="go('scaleUp')"><i>02</i><b>生产管理</b><span>项目方案与SKU生产联动</span></button><button @click="go('production')"><i>03</i><b>智能成本核算</b><span>AI BOM、工艺、预算与报价</span></button><button @click="go('sampleProduction')"><i>04</i><b>产品打样</b><span>{{orders.filter((x:any)=>x.orderType==='sample').length}} 张打样订单</span></button><button @click="go('bulkProduction')"><i>05</i><b>大货生产</b><span>{{orders.filter((x:any)=>x.orderType==='bulk').length}} 张大货订单</span></button><button @click="go('warehouseLogistics')"><i>06</i><b>仓储物流</b><span>库存、拣货、出库与运输</span></button></div>
+<div class="dash-grid"><section class="panel"><header><div><h3>生产订单动态</h3><p>统一订单号贯穿报价、生产与物流</p></div><button @click="go('sampleProduction')">进入管理</button></header><table><thead><tr><th>订单号</th><th>类型</th><th>产品</th><th>金额</th><th>状态</th></tr></thead><tbody><tr v-for="o in recentOrders" :key="o.id"><td><b>{{o.orderNo}}</b></td><td>{{o.orderType==='sample'?'打样':'大货'}}</td><td>{{o.productName}}</td><td>¥{{Number(o.totalAmount||0).toFixed(2)}}</td><td><em :class="o.status">{{statusText[o.status]||o.status}}</em></td></tr></tbody></table><div v-if="!recentOrders.length" class="empty">暂无生产订单</div></section><section class="panel health"><header><div><h3>经营健康度</h3><p>生产、库存和履约关键指标</p></div></header><div><span>BOM方案</span><b>{{production.bomCount||0}}</b><small>物料库 {{production.materialCount||0}} · 工艺库 {{production.processCount||0}}</small></div><div><span>打样 / 大货任务</span><b>{{production.sampleCount||0}} / {{production.productionCount||0}}</b><small>待采购建议 {{production.pendingPurchaseCount||0}}</small></div><div><span>库存可用量</span><b>{{Number(warehouse.availableStock||0).toFixed(0)}}</b><small>库存品类 {{warehouse.itemCount||0}} · 待拣货 {{warehouse.pendingPick||0}}</small></div><div><span>物流履约</span><b>{{logistics.inTransitCount||0}} 在途</b><small>已签收 {{logistics.signedCount||0}} · 总发货 {{logistics.shipmentCount||0}}</small></div></section></div>
+<div class="dash-grid lower"><section class="panel"><header><div><h3>创意资产</h3><p>设计成果与生产参考资产沉淀</p></div><button @click="go('studio')">进入创意设计</button></header><div class="asset-stats"><div><span>全部资产</span><b>{{assets.length}}</b></div><div><span>图片资产</span><b>{{assets.filter((x:any)=>x.assetType==='image').length}}</b></div><div><span>BOM方案</span><b>{{production.bomCount||0}}</b></div><div><span>生产项目</span><b>{{workbench.sources?.length||0}}</b></div></div><div class="thumbs"><img v-for="a in assets.filter((x:any)=>x.assetType==='image').slice(0,5)" :src="a.previewUrl||a.fileUrl"></div></section><section class="panel alerts"><header><div><h3>今日待办</h3><p>按业务风险优先处理</p></div></header><button @click="go('sampleProduction')"><b>{{statusCount('pending_confirm')}}</b><span>订单等待客户确认</span></button><button @click="go('bulkProduction')"><b>{{statusCount('confirmed')}}</b><span>订单已确认待下达生产</span></button><button @click="go('warehouse')"><b>{{warehouse.alertCount||0}}</b><span>库存预警需要处理</span></button><button @click="go('logistics')"><b>{{logistics.exceptionCount||0}}</b><span>异常物流需要跟进</span></button></section></div>
+</div></template>
+<style scoped>.dashboard-page{background:#f4f6fa;min-height:100vh}.classic-hero{display:flex;justify-content:space-between;align-items:center;padding:27px;border-radius:20px;color:#fff;background:linear-gradient(125deg,#0f172a,#312e81 55%,#0f766e)}.classic-hero p{font-size:11px;letter-spacing:2px;font-weight:900}.classic-hero h2{font-size:30px;margin:5px 0}.classic-hero span{opacity:.8}.classic-hero>div:last-child{display:flex;gap:9px}.classic-hero .btn{border:1px solid #ffffff55;background:#ffffff18;color:#fff}.classic-hero .primary{background:#fff;color:#312e81}.core-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin:16px 0}.core-stats article,.panel{background:#fff;border:1px solid #e2e8f0;border-radius:15px;padding:16px}.core-stats span,.core-stats small{display:block;color:#64748b;font-size:11px}.core-stats b{display:block;font-size:25px;margin:7px 0;color:#172554}.core-stats .danger{color:#dc2626}.quick-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}.quick-grid button{border:1px solid #e2e8f0;background:#fff;border-radius:14px;padding:14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:5px}.quick-grid button:hover{border-color:#6366f1;transform:translateY(-1px)}.quick-grid i{font-style:normal;color:#6366f1;font-size:11px}.quick-grid span{font-size:11px;color:#64748b}.dash-grid{display:grid;grid-template-columns:1.7fr .8fr;gap:16px;margin-bottom:16px}.dash-grid.lower{grid-template-columns:1.35fr .65fr}.panel header{display:flex;justify-content:space-between;margin-bottom:13px}.panel h3{margin:0}.panel p{margin:4px 0;color:#64748b;font-size:12px}.panel header button{border:0;background:#eef2ff;color:#4338ca;border-radius:8px;padding:7px 10px;cursor:pointer}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #eef2f7;text-align:left;font-size:12px}th{color:#64748b}em{font-style:normal;padding:4px 8px;border-radius:999px;background:#f1f5f9}em.producing{background:#dbeafe;color:#1d4ed8}em.ready_to_ship{background:#dcfce7;color:#15803d}.health>div{padding:12px 0;border-bottom:1px solid #eee}.health span,.health small{display:block;color:#64748b;font-size:11px}.health b{display:block;font-size:20px;margin:4px 0}.asset-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.asset-stats div{background:#f8fafc;border-radius:10px;padding:11px}.asset-stats span{font-size:11px;color:#64748b}.asset-stats b{display:block;font-size:20px;margin-top:4px}.thumbs{display:flex;gap:8px;margin-top:12px}.thumbs img{width:72px;height:55px;object-fit:cover;border-radius:8px}.alerts{display:flex;flex-direction:column}.alerts button{display:flex;align-items:center;gap:12px;border:0;border-top:1px solid #eee;background:#fff;padding:12px;cursor:pointer;text-align:left}.alerts button b{font-size:20px;color:#dc2626;min-width:32px}.alerts button span{color:#475569}.empty{text-align:center;padding:25px;color:#94a3b8}@media(max-width:1200px){.core-stats,.quick-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.dash-grid,.dash-grid.lower{grid-template-columns:1fr}.core-stats,.quick-grid{grid-template-columns:1fr 1fr}}</style>

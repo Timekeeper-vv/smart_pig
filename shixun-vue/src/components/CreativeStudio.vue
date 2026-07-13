@@ -1,226 +1,60 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-
-const emit = defineEmits<{ alert: [msg: string, type?: 'success' | 'error'] }>()
-const styles = ref<any[]>([])
-const assets = ref<any[]>([])
-const jobs = ref<any[]>([])
-const loading = ref(false)
-const promptLoading = ref(false)
-const imageLoading = ref(false)
-const result = ref<any>(null)
-const previewImage = ref<any>(null)
-const currentStep = ref(0)
-
-const form = ref({
-  title: '山城街巷亚克力钥匙扣',
-  styleId: 1,
-  productType: '亚克力钥匙扣',
-  scene: '景区伴手礼、城市礼物、年轻游客购买',
-  concept: '以山城坡道、路灯、老店招牌、小面碗和街巷烟火气为核心元素，做一款温暖、有记忆点的城市文创产品。',
-  material: '3mm透明亚克力，双面彩印，金属钥匙扣，独立OPP袋',
-  audience: '年轻游客、城市礼物购买者、企业活动客户',
-  visualStyle: '温暖治愈、东方城市插画、干净高级、适合小批量打样',
-  imageSize: '1024x1024',
-  tags: '文创,产品原型图,AI设计工坊',
-  negativePrompt: '不要低清晰度，不要错字，不要复杂杂乱背景，不要廉价塑料感，不要侵权IP形象'
-})
-
-const generatedPrompt = ref('')
-const generatedNegativePrompt = ref('')
-const selectedStyle = computed(() => styles.value.find(s => Number(s.id) === Number(form.value.styleId)))
-const imageAssets = computed(() => assets.value.filter(a => a.assetType === 'image').slice(0, 8))
-
-async function loadBase() {
-  loading.value = true
-  try {
-    const [s, a, j] = await Promise.all([
-      fetch('/api/creative/ai/styles'),
-      fetch('/api/creative/ai/assets'),
-      fetch('/api/creative/ai/jobs')
-    ])
-    styles.value = await s.json()
-    assets.value = await a.json()
-    jobs.value = await j.json()
-  } catch (e: any) { emit('alert', `加载AI设计工坊失败：${e.message || e}`, 'error') }
-  finally { loading.value = false }
-}
-
-function buildBasicIdea() {
-  return [
-    `主题/IP：${form.value.concept}`,
-    `目标人群：${form.value.audience}`,
-    `材质工艺：${form.value.material}`,
-    `视觉风格：${form.value.visualStyle}`
-  ].join('\n')
-}
-
-async function generatePrompt() {
-  promptLoading.value = true
-  result.value = null
-  try {
-    const res = await fetch('/api/creative/ai/prompt/ai', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        title: form.value.title,
-        styleId: form.value.styleId,
-        productType: form.value.productType,
-        scene: form.value.scene,
-        prompt: buildBasicIdea(),
-        negativePrompt: form.value.negativePrompt,
-        imageSize: form.value.imageSize,
-        tags: form.value.tags
-      })
-    })
-    if (!res.ok) throw new Error(await res.text())
-    const data = await res.json()
-    generatedPrompt.value = data.prompt || data.rawPrompt || ''
-    generatedNegativePrompt.value = data.negativePrompt || form.value.negativePrompt
-    currentStep.value = 1
-    emit('alert', '产品原型图提示词已生成，可以继续修改', 'success')
-  } catch (e: any) { emit('alert', `生成提示词失败：${e.message || e}`, 'error') }
-  finally { promptLoading.value = false }
-}
-
-async function generateImage() {
-  if (!generatedPrompt.value.trim()) { emit('alert', '请先生成或填写提示词', 'error'); return }
-  imageLoading.value = true
-  result.value = null
-  currentStep.value = 2
-  try {
-    const res = await fetch('/api/creative/ai/text-to-image', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        title: form.value.title,
-        styleId: form.value.styleId,
-        productType: form.value.productType,
-        scene: form.value.scene,
-        prompt: generatedPrompt.value,
-        negativePrompt: generatedNegativePrompt.value,
-        imageSize: form.value.imageSize,
-        tags: form.value.tags
-      })
-    })
-    if (!res.ok) throw new Error(await res.text())
-    result.value = await res.json()
-    currentStep.value = 3
-    emit('alert', '产品原型图生成成功，已保存到资产库', 'success')
-    await loadBase()
-  } catch (e: any) { emit('alert', `生成产品图失败：${e.message || e}`, 'error'); currentStep.value = 1 }
-  finally { imageLoading.value = false }
-}
-
-function useSample(type: string) {
-  if (type === 'magnet') {
-    form.value.title = '山城街巷冰箱贴'
-    form.value.productType = '冰箱贴'
-    form.value.material = '软磁+滴胶工艺，异形轮廓，背面磁吸'
-    form.value.concept = '把山城坡道、轻轨穿楼、老街灯牌做成层次丰富的城市记忆冰箱贴。'
-  } else if (type === 'sticker') {
-    form.value.title = '街巷小味贴纸包'
-    form.value.productType = '贴纸包'
-    form.value.material = '防水PVC贴纸，模切白边，6-8个元素一组'
-    form.value.concept = '一组治愈系食物和街角小物贴纸，包含小面、茶碗、路灯、店招、猫和坡道。'
-  } else {
-    form.value.title = '山城街巷亚克力钥匙扣'
-    form.value.productType = '亚克力钥匙扣'
-    form.value.material = '3mm透明亚克力，双面彩印，金属钥匙扣，独立OPP袋'
-    form.value.concept = '以山城坡道、路灯、老店招牌、小面碗和街巷烟火气为核心元素，做一款温暖、有记忆点的城市文创产品。'
+import { computed,nextTick,onBeforeUnmount,onMounted,reactive,ref } from 'vue'
+const emit=defineEmits<{alert:[msg:string,type?:'success'|'error']}>()
+const active=ref<'image2d'|'model3d'|'review'>('image2d'),styles=ref<any[]>([]),assets=ref<any[]>([]),jobs=ref<any[]>([]),reviews=ref<any[]>([]),busy=ref(false)
+const imageResult=ref<any>(null),imagePreviewUrl=ref(''),uploadPreviewUrl=ref(''),uploadLoadError=ref(''),imageLoadError=ref(''),resultAnchor=ref<HTMLElement|null>(null),aiStage=ref(''),elapsed=ref(0),stageTimer=ref<any>(null),modelResult=ref<any>(null),reviewResult=ref<any>(null),generatedPrompt=ref(''),uploadPreview=ref('')
+const form2d=reactive({title:'山城街巷亚克力钥匙扣',styleId:1,productType:'亚克力钥匙扣',scene:'景区伴手礼、城市礼物',concept:'山城坡道、路灯、老店招牌和街巷烟火气',material:'3mm透明亚克力，双面彩印，金属钥匙扣',audience:'年轻游客、城市礼物购买者',visualStyle:'温暖治愈、东方城市插画、干净高级',imageSize:'1024x1024',negativePrompt:'不要低清晰度、错字、侵权IP、杂乱背景'})
+const form3d=reactive({prompt:'山城街巷主题亚克力钥匙扣，异形轮廓，正面浮雕层次，适合打样和量产',inputAssetId:null as number|null,exportFormats:'OBJ,STL,GLB'})
+const reviewForm=reactive({title:'新文创产品可行性评估',productType:'文创礼品',copy:'',targetAudience:'',priceRange:'',material:'',salesScene:'',productionRequirement:'',assetId:null as number|null})
+const imageAssets=computed(()=>assets.value.filter(x=>x.assetType==='image'))
+function startStage(text:string){aiStage.value=text;elapsed.value=0;clearInterval(stageTimer.value);stageTimer.value=setInterval(()=>elapsed.value++,1000)}
+function endStage(){clearInterval(stageTimer.value);stageTimer.value=null;aiStage.value=''}
+function imageSrc(x:any){return imagePreviewUrl.value||(x?.imageUrl||x?.previewUrl||x?.fileUrl||'')}
+async function prepareImagePreview(data:any){
+  imageLoadError.value=''; if(!data?.assetId)throw new Error('生图接口未返回资产ID')
+  let lastError:any=null
+  for(let attempt=1;attempt<=6;attempt++){
+    try{
+      aiStage.value=`图片已生成，正在读取高清文件（第 ${attempt}/6 次）…`
+      const response=await fetch(`/api/creative/ai/assets/${data.assetId}/content?v=${Date.now()}`,{cache:'no-store'})
+      if(!response.ok)throw new Error(`图片读取失败 HTTP ${response.status}`)
+      const blob=await response.blob(); if(!blob.type.startsWith('image/'))throw new Error(`图片接口返回类型异常：${blob.type||'unknown'}`)
+      if(imagePreviewUrl.value.startsWith('blob:'))URL.revokeObjectURL(imagePreviewUrl.value)
+      imagePreviewUrl.value=URL.createObjectURL(blob); await nextTick(); resultAnchor.value?.scrollIntoView({behavior:'smooth',block:'center'}); return
+    }catch(e){lastError=e;if(attempt<6)await new Promise(resolve=>setTimeout(resolve,500*attempt))}
   }
-  generatedPrompt.value = ''
-  result.value = null
-  currentStep.value = 0
+  throw lastError
 }
-
-function downloadUrl(url?: string) { return url || '#' }
-function openPreview(asset: any) { if (asset?.previewUrl || asset?.fileUrl || asset?.imageUrl) previewImage.value = asset }
-onMounted(loadBase)
+async function prepareUploadPreview(assetId:number){
+  uploadLoadError.value=''; let lastError:any=null
+  for(let attempt=1;attempt<=5;attempt++){
+    try{
+      const response=await fetch(`/api/creative/ai/assets/${assetId}/content?v=${Date.now()}`,{cache:'no-store'})
+      if(!response.ok)throw new Error(`参考图读取失败 HTTP ${response.status}`)
+      const blob=await response.blob(); if(!blob.type.startsWith('image/'))throw new Error(`参考图接口返回类型异常：${blob.type||'unknown'}`)
+      if(uploadPreviewUrl.value.startsWith('blob:'))URL.revokeObjectURL(uploadPreviewUrl.value)
+      uploadPreviewUrl.value=URL.createObjectURL(blob); return
+    }catch(e){lastError=e;if(attempt<5)await new Promise(resolve=>setTimeout(resolve,300*attempt))}
+  }
+  uploadLoadError.value=lastError?.message||String(lastError);throw lastError
+}
+async function load(){try{const [s,a,j,r]=await Promise.all([fetch('/api/creative/ai/styles'),fetch('/api/creative/ai/assets'),fetch('/api/creative/ai/jobs'),fetch('/api/creative/ai/reviews')]);styles.value=await s.json();assets.value=await a.json();jobs.value=await j.json();reviews.value=await r.json()}catch(e:any){emit('alert','加载创意设计失败：'+e.message,'error')}}
+function idea(){return `创意概念：${form2d.concept}\n目标人群：${form2d.audience}\n材质工艺：${form2d.material}\n视觉风格：${form2d.visualStyle}`}
+async function compose(){busy.value=true;startStage('正在调用 SiliconFlow · Qwen3 文本模型，分析产品信息并生成商业生图提示词…');try{const r=await fetch('/api/creative/ai/prompt/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...form2d,prompt:idea(),tags:'文创,2D创意生图'})});if(!r.ok)throw new Error(await r.text());const d=await r.json();generatedPrompt.value=d.prompt||d.rawPrompt||'';emit('alert','AI提示词已生成，可人工修改','success')}catch(e:any){emit('alert','提示词生成失败：'+e.message,'error')}finally{busy.value=false;endStage()}}
+async function generate2d(){if(!generatedPrompt.value)await compose();if(!generatedPrompt.value)return;busy.value=true;startStage('正在调用 SiliconFlow · Kolors 图像模型生成 2D 产品视觉图，通常需要 15–60 秒，请勿重复点击或离开页面…');try{const r=await fetch('/api/creative/ai/text-to-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...form2d,prompt:generatedPrompt.value,tags:'文创,2D创意生图'})});if(!r.ok)throw new Error(await r.text());const data=await r.json();imageResult.value=data;startStage('图片已生成，正在从服务器读取高清文件并准备预览…');await prepareImagePreview(data);emit('alert','2D创意图已生成并加载完成','success');load().catch(()=>{})}catch(e:any){imageLoadError.value=e.message||String(e);emit('alert','生图或图片加载失败：'+imageLoadError.value,'error')}finally{busy.value=false;endStage()}}
+async function upload(file:File,title:string){const fd=new FormData();fd.append('file',file);fd.append('title',title);fd.append('tags','创意评估,用户上传');const r=await fetch('/api/creative/ai/assets/upload',{method:'POST',body:fd});if(!r.ok)throw new Error(await r.text());return await r.json()}
+async function upload3d(e:Event){const f=(e.target as HTMLInputElement).files?.[0];if(!f)return;busy.value=true;try{const d=await upload(f,'3D建模参考图');form3d.inputAssetId=d.assetId;uploadPreview.value=d.url;await prepareUploadPreview(d.assetId);emit('alert','3D参考图已上传并显示','success')}catch(x:any){emit('alert','上传失败：'+x.message,'error')}finally{busy.value=false}}
+async function generate3d(){busy.value=true;try{const r=await fetch('/api/creative/ai/text-to-3d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form3d)});if(!r.ok)throw new Error(await r.text());modelResult.value=await r.json();emit('alert','3D辅助建模方案已生成','success');await load()}catch(e:any){emit('alert','3D方案生成失败：'+e.message,'error')}finally{busy.value=false}}
+async function selectReviewImage(e:Event){const f=(e.target as HTMLInputElement).files?.[0];if(!f)return;busy.value=true;try{const d=await upload(f,reviewForm.title||'智能评估图片');reviewForm.assetId=d.assetId;uploadPreview.value=d.url;await prepareUploadPreview(d.assetId);emit('alert','评估图片已上传并显示','success')}catch(x:any){emit('alert','图片上传失败：'+x.message,'error')}finally{busy.value=false}}
+async function evaluate(){if(!reviewForm.assetId){emit('alert','请先上传需要评估的产品图、设计稿或参考图','error');return}if(!reviewForm.copy.trim()){emit('alert','请填写产品创意文案或方案说明','error');return}busy.value=true;reviewResult.value=null;try{const context=`产品类型：${reviewForm.productType}\n创意文案：${reviewForm.copy}\n目标人群：${reviewForm.targetAudience}\n预期价格：${reviewForm.priceRange}\n材质工艺：${reviewForm.material}\n销售场景：${reviewForm.salesScene}\n生产要求：${reviewForm.productionRequirement}\n请重点评估视觉创意、市场需求、成本量产、知识产权、销售转化及改进方案。`;const r=await fetch('/api/creative/ai/reviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assetId:reviewForm.assetId,context})});if(!r.ok)throw new Error(await r.text());reviewResult.value=await r.json();emit('alert','智能可行性评估完成','success');await load()}catch(e:any){emit('alert','评估失败：'+e.message,'error')}finally{busy.value=false}}
+function scoreClass(n:any){return Number(n)>=85?'good':Number(n)>=70?'warn':'bad'}
+onMounted(load);onBeforeUnmount(()=>{clearInterval(stageTimer.value);if(imagePreviewUrl.value.startsWith('blob:'))URL.revokeObjectURL(imagePreviewUrl.value);if(uploadPreviewUrl.value.startsWith('blob:'))URL.revokeObjectURL(uploadPreviewUrl.value)})
 </script>
-
-<template>
-  <div class="page studio-page">
-    <div class="page-header studio-hero">
-      <div>
-        <p class="eyebrow">AI DESIGN STUDIO</p>
-        <h2 class="page-title">AI设计工坊</h2>
-        <p class="page-desc">用户只填基础信息，AI先生成“产品原型图提示词”；你可以修改确认，再调用大模型生成产品图。</p>
-      </div>
-      <button class="btn btn-secondary" @click="loadBase">刷新资产</button>
-    </div>
-
-    <div class="steps-card">
-      <div class="step" :class="{active:currentStep===0,done:currentStep>0}"><span>1</span><b>填基础信息</b><small>产品、主题、材质、风格</small></div>
-      <div class="step" :class="{active:currentStep===1,done:currentStep>1}"><span>2</span><b>AI生成提示词</b><small>生成后可人工修改</small></div>
-      <div class="step" :class="{active:currentStep===2,done:currentStep>2}"><span>3</span><b>确认生成产品图</b><small>保存到资产库</small></div>
-    </div>
-
-    <div v-if="promptLoading || imageLoading" class="loading-banner">
-      {{ promptLoading ? '正在调用硅基流动AI生成产品原型图提示词，通常20-60秒...' : '正在调用硅基流动AI生成产品图，通常20-60秒，请勿重复点击...' }}
-    </div>
-
-    <div class="studio-layout">
-      <section class="studio-panel">
-        <div class="section-title"><span>填</span><div><h3>基础信息</h3><p>这里尽量用业务语言填写，不需要懂提示词。</p></div></div>
-        <div class="sample-row">
-          <button class="mini" @click="useSample('keychain')">钥匙扣示例</button>
-          <button class="mini" @click="useSample('magnet')">冰箱贴示例</button>
-          <button class="mini" @click="useSample('sticker')">贴纸包示例</button>
-        </div>
-        <label>产品名称</label><input v-model="form.title" />
-        <div class="form-row"><div><label>产品类型</label><input v-model="form.productType" /></div><div><label>图片尺寸</label><select v-model="form.imageSize"><option value="1024x1024">方图 1024×1024</option><option value="1024x768">横图 1024×768</option><option value="768x1024">竖图 768×1024</option></select></div></div>
-        <label>品牌视觉风格</label>
-        <select v-model="form.styleId">
-          <option v-for="s in styles" :key="s.id" :value="s.id">{{ s.name }}</option>
-        </select>
-        <div v-if="selectedStyle" class="style-note"><b>{{ selectedStyle.name }}</b><span>{{ selectedStyle.description }}</span></div>
-        <label>主题/IP想法</label><textarea v-model="form.concept" rows="4" />
-        <label>目标人群</label><input v-model="form.audience" />
-        <label>使用场景</label><input v-model="form.scene" />
-        <label>材质/工艺</label><input v-model="form.material" />
-        <label>想要的视觉风格</label><input v-model="form.visualStyle" />
-        <label>反向要求</label><input v-model="form.negativePrompt" />
-        <button class="btn btn-primary full" :disabled="promptLoading" @click="generatePrompt">{{ promptLoading ? 'AI生成中...' : '下一步：AI生成产品图提示词' }}</button>
-      </section>
-
-      <section class="studio-panel">
-        <div class="section-title"><span>改</span><div><h3>可编辑提示词</h3><p>AI生成后你可以直接改，确认满意再生图。</p></div></div>
-        <label>正向提示词</label>
-        <textarea v-model="generatedPrompt" rows="14" placeholder="点击左侧按钮后，这里会出现用于生成产品原型图的提示词。你也可以手动填写。" />
-        <label>反向提示词</label>
-        <textarea v-model="generatedNegativePrompt" rows="4" placeholder="不想出现的内容，比如：低清晰、错字、变形、杂乱背景。" />
-        <button class="btn btn-primary full" :disabled="imageLoading || !generatedPrompt.trim()" @click="generateImage">{{ imageLoading ? '产品图生成中...' : '确认提示词，生成产品图' }}</button>
-
-        <div v-if="result" class="result-card">
-          <div class="result-head"><div><b>生成成功</b><span>{{ result.jobNo }} · 资产ID {{ result.assetId }}</span></div><a class="btn btn-secondary btn-sm" :href="downloadUrl(result.imageUrl)" :download="form.title + '.png'">下载图片</a></div>
-          <img :src="result.imageUrl" @click="openPreview({ ...result, previewUrl: result.imageUrl, title: form.title })" />
-        </div>
-      </section>
-    </div>
-
-    <section class="studio-panel asset-panel">
-      <div class="panel-head"><div><h3>最近生成的产品图</h3><p>生成成功后会自动沉淀到资产库，后面可以继续用于打样、上架和评审。</p></div></div>
-      <div class="asset-grid">
-        <article v-for="asset in imageAssets" :key="asset.id" class="asset-card">
-          <img v-if="asset.previewUrl" :src="asset.previewUrl" @click="openPreview(asset)" />
-          <div v-else class="asset-placeholder">图片资产</div>
-          <div class="asset-body"><b>{{ asset.title }}</b><span>{{ asset.assetNo }} · {{ asset.status }}</span><small>{{ asset.tags }}</small><a class="btn btn-secondary btn-sm" :href="downloadUrl(asset.fileUrl || asset.previewUrl)" :download="asset.title + '.png'">下载</a></div>
-        </article>
-        <div v-if="!imageAssets.length" class="empty">暂无产品图，先生成一张。</div>
-      </div>
-      <h4>最近任务</h4>
-      <div class="job-list"><div v-for="job in jobs.slice(0,8)" :key="job.id" class="job-item"><b>{{ job.jobNo }}</b><span>{{ job.jobType }} / {{ job.provider }}</span><em :class="job.status">{{ job.status }}</em></div></div>
-    </section>
-
-    <div v-if="previewImage" class="image-modal" @click.self="previewImage=null">
-      <div class="image-modal-card">
-        <button class="modal-close" @click="previewImage=null">×</button>
-        <img :src="previewImage.previewUrl || previewImage.fileUrl || previewImage.imageUrl" />
-        <div class="modal-foot"><b>{{ previewImage.title || 'AI生成图片' }}</b><a class="btn btn-primary btn-sm" :href="downloadUrl(previewImage.fileUrl || previewImage.previewUrl || previewImage.imageUrl)" :download="(previewImage.title || 'AI作品') + '.png'">下载原图</a></div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<style scoped>
-.studio-page{background:#f8fafc;min-height:calc(100vh - var(--header-h))}.studio-hero{padding:26px;border-radius:20px;background:linear-gradient(135deg,#111827,#7c3aed 45%,#f97316);color:#fff}.studio-hero .page-title{color:#fff;font-size:28px}.studio-hero .page-desc{color:rgba(255,255,255,.82)}.eyebrow{margin:0 0 8px;font-size:12px;letter-spacing:2px;color:#fed7aa;font-weight:800}.steps-card{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}.step{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm)}.step span{width:34px;height:34px;border-radius:50%;background:#e2e8f0;color:#334155;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0}.step b{display:block}.step small{display:block;color:#64748b;margin-top:3px}.step.active{border-color:#f97316;background:#fff7ed}.step.active span{background:#f97316;color:#fff}.step.done{border-color:#a78bfa;background:#faf5ff}.step.done span{background:#7c3aed;color:#fff}.loading-banner{margin:14px 0;padding:12px 16px;border-radius:14px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-weight:800}.studio-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}.studio-panel{background:#fff;border:1px solid var(--c-border);border-radius:18px;padding:20px;box-shadow:var(--shadow-sm)}.section-title{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}.section-title>span{background:#7c3aed;color:#fff;border-radius:12px;min-width:38px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:900}.section-title h3{margin:0 0 4px}.section-title p{margin:0;color:#64748b;font-size:13px}.sample-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.mini{border:0;background:#f1f5f9;border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:800}.studio-panel label{display:block;font-size:12px;font-weight:800;color:#64748b;margin:10px 0 6px}input,select,textarea{width:100%;border:1px solid var(--c-border);border-radius:10px;padding:10px 12px;font-family:var(--font);font-size:14px;background:#fff}textarea{resize:vertical;line-height:1.6}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.style-note{padding:12px;border-radius:12px;background:#f5f3ff;border:1px solid #ddd6fe;margin-top:10px;display:flex;flex-direction:column;gap:4px}.style-note span{color:#6b7280;font-size:12px}.full{width:100%;margin-top:16px}.result-card{margin-top:18px;border:2px solid #22c55e;background:#f0fdf4;border-radius:18px;padding:14px}.result-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.result-head b{display:block}.result-head span{font-size:12px;color:#64748b}.result-card img{width:100%;max-height:560px;object-fit:contain;border-radius:14px;background:#fff;cursor:zoom-in;box-shadow:0 12px 30px rgba(15,23,42,.12)}.panel-head h3{margin:0 0 4px}.panel-head p{margin:0 0 16px;color:var(--c-text-2);font-size:13px}.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.asset-card{border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;background:#fff}.asset-card img,.asset-placeholder{width:100%;height:190px;object-fit:cover;background:#111827;color:#fff;display:flex;align-items:center;justify-content:center;cursor:zoom-in}.asset-body{padding:12px;display:flex;flex-direction:column;gap:6px}.asset-body span,.asset-body small{font-size:12px;color:#64748b}.asset-body a{text-decoration:none;text-align:center;align-self:flex-start}.empty{grid-column:1/-1;text-align:center;color:#64748b;padding:36px;border:1px dashed #cbd5e1;border-radius:14px}.job-list{display:flex;flex-direction:column;gap:8px}.job-item{display:flex;align-items:center;gap:10px;border-top:1px solid #eef2f7;padding:10px 0}.job-item span{flex:1;color:#64748b;font-size:13px}.job-item em{font-style:normal;border-radius:999px;padding:3px 8px;font-size:12px;background:#e5e7eb}.job-item em.succeeded{background:#dcfce7;color:#166534}.job-item em.failed{background:#fee2e2;color:#991b1b}.job-item em.running{background:#dbeafe;color:#1d4ed8}.image-modal{position:fixed;inset:0;background:rgba(15,23,42,.74);z-index:1000;display:flex;align-items:center;justify-content:center;padding:28px}.image-modal-card{position:relative;background:#fff;border-radius:20px;padding:16px;max-width:min(1100px,94vw);max-height:94vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 25px 80px rgba(0,0,0,.35)}.image-modal-card img{max-width:100%;max-height:78vh;object-fit:contain;border-radius:14px;background:#f8fafc}.modal-close{position:absolute;right:14px;top:10px;border:0;background:rgba(15,23,42,.72);color:#fff;border-radius:999px;width:34px;height:34px;font-size:22px;cursor:pointer}.modal-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}@media(max-width:1100px){.studio-layout,.steps-card,.form-row{grid-template-columns:1fr}.result-head{align-items:flex-start;flex-direction:column}}
-</style>
+<template><div class="page creative-page">
+<header class="hero"><div><p>CREATIVE DESIGN WORKSPACE</p><h2>创意设计</h2><span>从2D视觉创意、3D建模方案到产品可行性评估，形成可进入项目开发的创意资产。</span></div><button class="btn btn-secondary" @click="load">刷新</button></header>
+<nav class="submenus"><button :class="{active:active==='image2d'}" @click="active='image2d'"><b>2D创意生图</b><span>文案转产品视觉方案</span></button><button :class="{active:active==='model3d'}" @click="active='model3d'"><b>3D辅助建模</b><span>结构、尺寸与建模规格</span></button><button :class="{active:active==='review'}" @click="active='review'"><b>智能评估</b><span>图片+文案商业可行性评审</span></button></nav>
+<section v-if="active==='image2d'" class="workspace"><div class="card form-card"><div class="title"><b>01</b><div><h3>2D创意生图</h3><p>输入产品概念，AI生成可用于提案、打样沟通的产品视觉图。</p></div></div><div class="grid"><label>方案名称<input v-model="form2d.title"></label><label>产品类型<input v-model="form2d.productType"></label><label>风格模板<select v-model.number="form2d.styleId"><option v-for="s in styles" :value="s.id">{{s.name}}</option></select></label><label>图片尺寸<select v-model="form2d.imageSize"><option>1024x1024</option><option>960x1280</option><option>1280x960</option></select></label></div><label>创意概念<textarea rows="4" v-model="form2d.concept"></textarea></label><label>目标人群与场景<textarea rows="2" v-model="form2d.audience"></textarea></label><label>材质与工艺<textarea rows="2" v-model="form2d.material"></textarea></label><label>视觉风格<textarea rows="2" v-model="form2d.visualStyle"></textarea></label><div v-if="aiStage" class="ai-progress"><span class="spinner"></span><div><b>{{aiStage}}</b><small>已等待 {{elapsed}} 秒 · 请求正在服务器执行，完成后图片会自动显示</small></div></div><div class="actions"><button class="btn" :disabled="busy" @click="compose">{{busy&&aiStage.includes('提示词')?'Qwen3 正在整理…':'调用 Qwen3 整理提示词'}}</button><button class="btn btn-primary" :disabled="busy" @click="generate2d">{{busy&&aiStage.includes('视觉图')?'Kolors 正在生图…':'调用 Kolors 生成2D创意图'}}</button></div></div><div ref="resultAnchor" class="card result"><h3>创意输出</h3><label>AI提示词<textarea rows="9" v-model="generatedPrompt" placeholder="先点击AI整理提示词，也可以手工填写"></textarea></label><div v-if="imageResult" class="image-result"><img v-if="imageSrc(imageResult)" :key="imagePreviewUrl||imageResult.assetId" :src="imageSrc(imageResult)"><div v-if="imageLoadError" class="image-error">{{imageLoadError}} <button @click="prepareImagePreview(imageResult)">重新加载图片</button></div><b>{{form2d.title}}</b><small>{{imageResult.source||'SiliconFlow 图像模型'}} · 任务 {{imageResult.jobNo}}</small></div><div v-else class="empty">生成后的2D产品视觉图将在这里显示</div></div></section>
+<section v-if="active==='model3d'" class="workspace"><div class="card form-card"><div class="title"><b>02</b><div><h3>3D辅助建模</h3><p>上传2D参考图并描述结构，AI输出尺寸、材质、拓扑和打样建模规格书。</p></div></div><label class="upload"><input type="file" accept="image/png,image/jpeg,image/webp" @change="upload3d"><span>上传2D设计图或产品参考图</span></label><img v-if="uploadPreview&&form3d.inputAssetId" :src="uploadPreviewUrl||uploadPreview" class="preview"><div v-if="uploadLoadError" class="image-error">{{uploadLoadError}} <button @click="prepareUploadPreview(form3d.inputAssetId!)">自动重试</button></div><label>3D造型和结构要求<textarea rows="8" v-model="form3d.prompt"></textarea></label><label>目标导出格式<input v-model="form3d.exportFormats"></label><button class="btn btn-primary full" :disabled="busy" @click="generate3d">生成3D辅助建模方案</button></div><div class="card result"><h3>3D建模规格书</h3><pre v-if="modelResult">{{modelResult.aiDraft}}</pre><div v-else class="empty">系统将输出造型拆解、尺寸、材质、工艺、建模步骤和开模风险。当前为辅助建模规格，不直接生成OBJ/STL实体模型。</div></div></section>
+<section v-if="active==='review'" class="review-workspace"><div class="review-intro"><div><p>INDEPENDENT AI REVIEW</p><h2>智能评估</h2><span>独立评估菜单：上传产品图、设计稿、包装稿或参考图，并结合文案、受众、价格和工艺进行商业可行性判断。</span></div></div><div class="workspace"><div class="card form-card"><h3>提交评估材料</h3><label class="upload large"><input type="file" accept="image/png,image/jpeg,image/webp" @change="selectReviewImage"><span>{{reviewForm.assetId?'图片已上传，可重新选择':'上传产品图片 / 设计稿 / 包装图'}}</span></label><img v-if="uploadPreview&&reviewForm.assetId" :src="uploadPreviewUrl||uploadPreview" class="preview"><div v-if="uploadLoadError" class="image-error">{{uploadLoadError}} <button @click="prepareUploadPreview(reviewForm.assetId!)">自动重试</button></div><div class="grid"><label>评估方案名称<input v-model="reviewForm.title"></label><label>产品类型<input v-model="reviewForm.productType"></label><label>目标人群<input v-model="reviewForm.targetAudience"></label><label>预期价格区间<input v-model="reviewForm.priceRange" placeholder="如 39-69元"></label><label>材质工艺<input v-model="reviewForm.material"></label><label>销售场景<input v-model="reviewForm.salesScene"></label></div><label>创意文案 / 产品方案<textarea rows="6" v-model="reviewForm.copy" placeholder="产品故事、核心卖点、文化元素、设计表达、使用方式等"></textarea></label><label>生产与质量要求<textarea rows="3" v-model="reviewForm.productionRequirement"></textarea></label><button class="btn btn-primary full" :disabled="busy" @click="evaluate">开始多角色智能评估</button></div><div class="card result"><template v-if="reviewResult"><div class="score-head"><div :class="['score',scoreClass(reviewResult.overallScore)]">{{reviewResult.overallScore}}</div><div><h3>{{reviewResult.recommendation==='go'?'建议推进':reviewResult.recommendation==='adjust'?'修改后推进':'暂不建议推进'}}</h3><p>{{reviewResult.summary}}</p></div></div><div v-for="a in reviewResult.agents" :key="a.agentKey" class="agent"><header><b>{{a.agentName}}</b><em :class="scoreClass(a.score)">{{a.score}}分 · {{a.verdict}}</em></header><p>{{a.comments}}</p><ul><li v-for="x in a.suggestions">{{x}}</li></ul></div></template><div v-else class="empty tall">评估结果将从设计完成度、市场潜力、成本量产和消费者购买意愿四个角度给出评分与改进建议。</div></div></div></section>
+<section class="card assets"><h3>最近创意资产</h3><div class="asset-grid"><article v-for="a in imageAssets.slice(0,8)" :key="a.id"><img :src="a.previewUrl||a.fileUrl"><b>{{a.title}}</b><small>{{a.assetNo}} · {{a.sourceType}}</small></article><div v-if="!imageAssets.length" class="empty">暂无创意资产</div></div></section></div></template>
+<style scoped>.creative-page{background:#f6f7fb;min-height:100vh}.hero{display:flex;justify-content:space-between;padding:28px;border-radius:22px;background:linear-gradient(135deg,#111827,#6d28d9 52%,#ea580c);color:#fff}.hero p,.review-intro p{font-size:11px;letter-spacing:2px;font-weight:900}.hero h2{font-size:30px;margin:5px 0}.hero span{opacity:.85}.submenus{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.submenus button{display:flex;flex-direction:column;align-items:flex-start;padding:17px;border:1px solid #e2e8f0;background:#fff;border-radius:15px;cursor:pointer}.submenus button.active{background:#4c1d95;color:#fff;border-color:#4c1d95;box-shadow:0 10px 30px #ddd6fe}.submenus span{font-size:12px;opacity:.7;margin-top:5px}.workspace{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;margin-bottom:18px;box-shadow:0 4px 18px rgba(15,23,42,.04)}.title{display:flex;gap:12px}.title>b{display:flex;width:38px;height:34px;align-items:center;justify-content:center;background:#6d28d9;color:#fff;border-radius:10px}.title h3,.result h3{margin:0 0 5px}.title p{margin:0;color:#64748b}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:block;font-size:12px;font-weight:800;color:#64748b;margin:12px 0 5px}input,select,textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:9px;padding:10px;font:inherit}textarea{line-height:1.6}.actions{display:flex;gap:10px;margin-top:15px}.full{width:100%;margin-top:15px}.result textarea{min-height:190px}.image-result img,.preview{display:block;width:100%;max-height:480px;object-fit:contain;border-radius:13px;background:#f8fafc;margin:12px 0}.image-result b{display:block}.empty{padding:45px 20px;text-align:center;color:#94a3b8;border:1px dashed #cbd5e1;border-radius:13px}.tall{padding:130px 25px}.upload{border:2px dashed #a78bfa;border-radius:14px;padding:24px;text-align:center;background:#faf5ff;cursor:pointer}.upload input{display:none}.upload span{color:#6d28d9}.large{padding:35px}pre{white-space:pre-wrap;line-height:1.75;font:inherit;color:#334155}.review-intro{padding:22px;margin-bottom:16px;background:linear-gradient(120deg,#0f172a,#0f766e);color:#fff;border-radius:18px}.review-intro h2{margin:4px 0}.score-head{display:flex;gap:16px;align-items:center;padding-bottom:16px;border-bottom:1px solid #eee}.score{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:900;color:#fff}.good{background:#16a34a!important;color:#fff}.warn{background:#d97706!important;color:#fff}.bad{background:#dc2626!important;color:#fff}.score-head h3{margin:0}.agent{padding:14px 0;border-bottom:1px solid #eee}.agent header{display:flex;justify-content:space-between}.agent em{font-style:normal;padding:4px 9px;border-radius:999px;font-size:11px}.agent p,.agent li{color:#475569;line-height:1.6}.assets{margin-top:18px}.asset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.asset-grid article{display:flex;flex-direction:column;gap:5px}.asset-grid img{width:100%;height:170px;object-fit:cover;border-radius:11px}.asset-grid small{color:#64748b}@media(max-width:1000px){.workspace,.grid{grid-template-columns:1fr}.submenus{grid-template-columns:1fr}.asset-grid{grid-template-columns:1fr 1fr}}.ai-progress{display:flex;gap:12px;align-items:center;margin-top:14px;padding:14px;background:#eff6ff;border:1px solid #93c5fd;border-radius:12px;color:#1e3a8a}.ai-progress small{display:block;margin-top:5px;color:#475569}.spinner{width:25px;height:25px;border:3px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite;flex:none}@keyframes spin{to{transform:rotate(360deg)}}.image-result small{display:block;color:#64748b;margin-top:5px}.image-error{padding:12px;margin:10px 0;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:10px}.image-error button{margin-left:8px;border:0;background:#991b1b;color:#fff;border-radius:7px;padding:6px 9px;cursor:pointer}</style>
