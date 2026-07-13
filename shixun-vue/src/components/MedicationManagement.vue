@@ -207,7 +207,7 @@ onMounted(load)
       </div>
       <div class="pagination" v-if="totalPages > 1">
         <button class="pg-btn" :disabled="page === 1" @click="page--">‹</button>
-        <span class="pg-info">第 {{ page }} / {{ totalPages }} 页 &nbsp;共 {{ filtered.length }} 条</span>
+        <span class="pg-info">第 {{ page }} / {{ totalPages }} 页 &nbsp;共 {{ total }} 条</span>
         <button class="pg-btn" :disabled="page === totalPages" @click="page++">›</button>
       </div>
     </div>

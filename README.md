@@ -1,1049 +1,716 @@
-# 智慧养殖场管理与溯源系统
+# 之间智造 · 文创产品智能体平台
 
-> 基于 Spring Boot + Vue 3 的全栈畜牧业数字化管理平台，覆盖牲畜从入栏、饲养、防疫到出栏销售的全生命周期数字闭环。
+> 面向文创产品公司的 AI 经营系统，覆盖 **接单报价、AI设计、项目开发、BOM/打样生产、IP商城、订单履约、真实物流跟踪、智能仓储、SaaS运营** 等流程。
+
+本系统适合以下业务：
+
+- 文创产品定制
+- 景区/城市礼物开发
+- 亚克力钥匙扣、冰箱贴、贴纸、明信片、帆布袋、礼盒等商品
+- 设计打样、生产履约、仓储物流、订单管理
+- 对外提供文创 SaaS 能力
 
 ---
 
 ## 目录
 
-- [一、项目背景与意义](#一项目背景与意义)
-- [二、系统概述](#二系统概述)
-- [三、技术选型](#三技术选型)
-- [四、系统架构](#四系统架构)
-- [五、功能模块详解](#五功能模块详解)
-- [六、数据库设计](#六数据库设计)
-- [七、核心技术难点与解决方案](#七核心技术难点与解决方案)
-- [八、API 接口设计](#八api-接口设计)
-- [九、安全设计](#九安全设计)
-- [十、快速启动](#十快速启动)
-- [十一、项目总结与展望](#十一项目总结与展望)
-- [十二、近期升级记录](#十二近期升级记录)
+- [一、系统定位](#一系统定位)
+- [二、技术栈](#二技术栈)
+- [三、默认访问方式](#三默认访问方式)
+- [四、系统菜单说明](#四系统菜单说明)
+- [五、核心业务流程](#五核心业务流程)
+- [六、AI能力说明](#六ai能力说明)
+- [七、物流与仓储说明](#七物流与仓储说明)
+- [八、本地启动](#八本地启动)
+- [九、阿里云部署](#九阿里云部署)
+- [十、常用运维命令](#十常用运维命令)
+- [十一、配置说明](#十一配置说明)
+- [十二、注意事项](#十二注意事项)
 
 ---
 
-## 一、项目背景与意义
+## 一、系统定位
 
-### 1.1 行业痛点
+这是一个文创产品公司的智能经营平台。
 
-随着畜牧业规模化发展，传统人工台账管理方式已无法满足现代养殖场的需求，主要体现在：
+系统目标不是单点工具，而是把文创业务做成完整闭环：
 
-| 痛点 | 具体问题 |
-|------|----------|
-| **信息断层** | 圈舍、批次、个体信息分散记录，难以关联查询 |
-| **追溯困难** | 食品安全事件发生后无法快速定位问题批次和个体 |
-| **管理粗放** | 免疫、用药、转舍等事件依赖人工记忆，易漏记 |
-| **数据不可靠** | 并发操作下存栏计数错误，数据一致性无保障 |
-| **决策滞后** | 缺乏数据统计视图，无法及时掌握养殖场整体状况，预警信息不能主动触达 |
-
-### 1.2 项目价值
-
-本系统针对上述痛点，提供完整的数字化解决方案：
-
-| 价值维度 | 描述 |
-|----------|------|
-| **资产数字化** | 圈舍 → 批次 → 个体三级精细化建模，每头牲畜拥有唯一数字身份（耳标号） |
-| **过程可追溯** | 完整记录免疫、用药、转舍、出栏等关键生命事件，支持全链路溯源查询 |
-| **数据高可靠** | 转舍操作采用数据库事务保障原子性，耳标号后端强制唯一校验 |
-| **决策可视化** | ECharts 多维图表 + 主动预警通知，数据驱动精准决策 |
-| **数据可出口** | 批次台账 / 免疫记录一键导出 Excel / PDF，满足合规留档需求 |
-
----
-
-## 二、系统概述
-
-### 2.1 系统定位
-
-本系统是一套面向**中小型养殖场**的 Web 端综合管理平台，具备以下特点：
-
-- **零门槛部署**：数据库建表与样本数据全自动初始化，开箱即用
-- **前后端分离**：Vue 3 SPA + Spring Boot RESTful API，职责清晰
-- **全流程覆盖**：从基础数据维护到生产事件记录，再到溯源分析，一站式完成
-
-### 2.2 功能全景图
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                        智慧养殖场管理与溯源系统                               │
-├──────────────┬──────────────────┬─────────────┬───────────────────────────┤
-│  基础数据中心  │  养殖资产管理中心   │  生产过程记录  │      数据服务中心              │
-├──────────────┼──────────────────┼─────────────┼───────────────────────────┤
-│ FR-01 圈舍管理 │ FR-03 养殖批次管理  │ FR-05 免疫记录 │ FR-09 个体全链路溯源           │
-│ FR-02 兽药疫苗库│ FR-04 个体数字档案  │ FR-06 用药记录 │ FR-10 批次溯源概览             │
-│              │                  │ FR-07 转舍管理 │ FR-12 数据统计分析（ECharts）   │
-│              │                  │ FR-08 出栏管理 │ FR-13 消息通知（预警推送）        │
-│              │                  │ FR-15 死亡管理 │ FR-14 数据导出（Excel / PDF）   │
-│              │                  │             │ FR-16 AI 智能咨询              │
-├──────────────┴──────────────────┴─────────────┴───────────────────────────┤
-│                  系统管理（用户管理、登录认证、三角色权限控制 FR-11）                  │
-└──────────────────────────────────────────────────────────────────────────┘
+```text
+客户询盘
+  ↓
+AI分析需求
+  ↓
+AI报价
+  ↓
+报价单
+  ↓
+AI设计工坊
+  ↓
+项目制开发 / SKU矩阵
+  ↓
+BOM / 打样 / 生产
+  ↓
+商城销售 / 订单履约
+  ↓
+智能仓储 / 拣货 / 出库
+  ↓
+真实物流跟踪
+  ↓
+数据沉淀 / SaaS化
 ```
 
 ---
 
-## 三、技术选型
+## 二、技术栈
 
-### 3.1 后端技术栈
+### 后端
 
-| 技术 | 版本 | 选型理由 |
-|------|------|----------|
-| **Spring Boot** | 2.7.3 | 开箱即用的 Java Web 框架，自动配置减少样板代码 |
-| **MyBatis** | 2.3.1 | SQL 完全可控，适合复杂查询（UNION ALL 溯源）和精细化调优 |
-| **MySQL** | 8.x | 成熟的关系型数据库，事务支持可靠，适合存储强结构化的养殖业务数据 |
-| **Spring Security Crypto** | — | 仅引入密码加密模块（BCrypt），不引入完整 Security 依赖，轻量适配 |
-| **SpringDoc OpenAPI** | 1.8.0 | 自动生成 Swagger 在线文档，方便接口调试与前后端联调 |
-| **Java** | 17 | LTS 版本，稳定可靠 |
+| 技术 | 说明 |
+|---|---|
+| Java 17 | 后端运行环境 |
+| Spring Boot 2.7.3 | REST API 服务 |
+| MyBatis / JdbcTemplate | 数据访问 |
+| MySQL 8.x | 业务数据库 |
+| SiliconFlow API | AI对话、企划、评审、生图提示词等 |
+| 快递100 API | 真实物流查询与订阅推送 |
 
-### 3.2 前端技术栈
+### 前端
 
-| 技术 | 版本 | 选型理由 |
-|------|------|----------|
-| **Vue 3** | 3.5.34 | Composition API 组织业务逻辑更灵活，响应式系统性能优异 |
-| **TypeScript** | 6.0.3 | 全量类型约束，配合 vue-tsc 编译期发现错误，提升可维护性 |
-| **Vite** | 8.x | 极速开发服务器（HMR），比 Webpack 启动快数倍 |
-| **ECharts** | 6.1.0 | Apache 开源图表库，支持折线、柱状、饼图等多类型，性能优秀 |
-| **SheetJS (xlsx)** | 0.18.x | 纯前端 Excel 生成与解析，零后端依赖，兼容性好 |
-| **jsPDF + AutoTable** | 4.x | 纯前端 PDF 生成，autoTable 插件支持表格自动分页 |
-| **原生 Fetch API** | — | 无需引入 Axios 等第三方库，减少依赖包体积 |
-
-### 3.3 架构模式
-
-```
-前后端分离  ·  RESTful API  ·  JSON 数据交换  ·  代理转发（Vite Dev Proxy）
-```
+| 技术 | 说明 |
+|---|---|
+| Vue 3 | 前端框架 |
+| TypeScript | 类型支持 |
+| Vite | 前端构建工具 |
+| ECharts | 数据看板 |
+| xlsx / jsPDF | 导出能力 |
 
 ---
 
-## 四、系统架构
+## 三、默认访问方式
 
-### 4.1 整体架构图
+### 本地开发地址
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        用户浏览器                             │
-│              http://localhost:5173 (开发) / 静态部署（生产）    │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ HTTP / JSON
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Vue 3 前端应用（SPA）                        │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  Sidebar  App.vue  LoginPage  GlobalAlert  NotificationPanel │   │
-│  ├──────────────────────────────────────────────────────┤   │
-│  │  PenMgmt  BatchMgmt  AnimalMgmt  ImmunizationMgmt   │   │
-│  │  MedicationMgmt  PenTransferMgmt  SlaughterMgmt      │   │
-│  │  DrugVaccineMgmt  TraceabilityView  UserMgmt         │   │
-│  │  StatisticsView（ECharts 图表）                        │   │
-│  └──────────────────────────────────────────────────────┘   │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ /api/** → localhost:8080
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│               Spring Boot 后端（端口 8080）                    │
-│  ┌─────────────┐  ┌─────────────┐  ┌────────────────────┐  │
-│  │  Controller  │  │   Service   │  │  Mapper (MyBatis)  │  │
-│  │  (REST API)  │→ │ (业务逻辑)  │→ │  (SQL Mapper XML)  │  │
-│  └─────────────┘  └─────────────┘  └────────────────────┘  │
-│       ↑ Swagger UI  /swagger-ui/index.html                   │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ JDBC
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│               MySQL 8.x 数据库（端口 3306）                    │
-│   pens · drugs_vaccines · batches · animals                  │
-│   immunization_records · medication_records                  │
-│   pen_transfer_records · slaughter_records · user            │
-└─────────────────────────────────────────────────────────────┘
+```text
+前端：http://localhost:5173/
+后端：http://localhost:8080/
 ```
 
-### 4.2 后端分层设计
+### 生产部署地址
 
-```
-Controller 层  →  接收 HTTP 请求，参数校验，返回 ResponseEntity
-    ↓
-Service 层     →  封装业务逻辑，事务控制（@Transactional）
-    ↓
-Mapper 层      →  MyBatis 接口，对应 resources/mapper/*.xml
-    ↓
-Model 层       →  Java POJO 实体类，与数据库表字段映射
+```text
+http://服务器公网IP:8080/
 ```
 
-### 4.3 前端组件结构
+如果配置了 Nginx 和域名：
 
+```text
+https://你的域名/
 ```
-App.vue（根组件，管理页面切换状态）
-├── LoginPage.vue（未登录时展示）
-└── 已登录布局
-    ├── Sidebar.vue（左侧导航，事件发射切换页面）
-    ├── NotificationPanel.vue（顶部铃铛，30s 轮询预警通知）
-    ├── GlobalAlert.vue（全局通知，成功/错误提示）
-    └── 当前激活的业务组件（根据 currentPage 响应式切换）
-        ├── Dashboard.vue
-        ├── StatisticsView.vue            ← 数据统计（ECharts）
-        ├── AiChat.vue                    ← AI 智能咨询（千问大模型）
-        ├── PenManagement.vue
-        ├── BatchManagement.vue           ← 支持 Excel/PDF 导出
-        ├── AnimalManagement.vue
-        ├── ImmunizationManagement.vue    ← 支持 Excel/PDF 导出 + 批量录入
-        ├── MedicationManagement.vue      ← 支持 Excel/PDF 导出
-        ├── PenTransferManagement.vue
-        ├── SlaughterManagement.vue
-        ├── DeathManagement.vue           ← 死亡管理（FR-15）
-        ├── DrugVaccineManagement.vue
-        ├── TraceabilityView.vue
-        └── UserManagement.vue
+
+### 默认账号
+
+```text
+用户名：admin
+密码：123456
 ```
 
 ---
 
-## 五、功能模块详解
+## 四、系统菜单说明
 
-### FR-01 圈舍资产管理
+左侧菜单按业务流程分组。
 
-对养殖场物理空间进行数字化建模，是整个系统的资源基础。
+### 1. 总览
 
-**核心功能：**
-- 新建/编辑/删除圈舍，设置圈舍编码（全局唯一）、容量上限
-- 启用 / 停用状态切换（停用圈舍不可接收新转入）
-- 实时显示当前存栏数（由系统自动维护，禁止人工修改）
+#### 经营看板
 
-**关键设计：** 存栏计数（`current_count`）仅通过转舍和出栏事务自动维护，确保与实际一致。
+查看整体经营数据，包括订单、收入、项目、SKU、AI能力入口等。
 
 ---
 
-### FR-02 兽药疫苗标准库
+### 2. 第一步：接单报价
 
-建立统一的投入品主数据，规范免疫和用药记录的录入口径。
+#### 询盘到报价
 
-**核心功能：**
-- 维护疫苗（VACCINE）和药品（DRUG）两类投入品信息
-- 记录规格、生产厂家等标准字段
-- 免疫/用药记录录入时通过下拉列表选取，杜绝随意输入
+用于客户定制单接待。
 
-**价值：** 统一口径，便于后续按投入品类型进行数据统计分析。
+流程：
 
----
-
-### FR-03 养殖批次管理
-
-按"同进同出"原则对牲畜进行逻辑分组，是连接圈舍与个体的桥梁。
-
-**核心功能：**
-- 批次编码唯一标识（如 `BATCH-2024-001`）
-- 记录入栏日期、品种来源、初始圈舍等信息
-- 批次视图展示当前批次的个体总数
-
----
-
-### FR-04 个体数字档案
-
-以**耳标号**为核心唯一标识，为每头牲畜建立终身数字身份档案。
-
-**核心功能：**
-- 耳标号全局唯一，后端双重校验（应用层 + 数据库唯一索引）
-- 关联批次和当前圈舍，支持按状态（在栏/已出栏）筛选
-- 个体状态（ACTIVE / SOLD）由出栏操作自动变更
-
-**设计亮点：** 耳标号冲突时后端返回 `409 Conflict` 状态码，前端精确展示错误信息。
-
----
-
-### FR-05 免疫记录
-
-录入疫苗接种事件，自动挂载到对应个体的生命周期时间线。
-
-**录入字段：** 耳标号、疫苗（从标准库选取）、接种时间、剂量、操作人员、备注
-
----
-
-### FR-06 用药记录
-
-记录用药事件及治疗原因，便于疫病分析和追责。
-
-**录入字段：** 耳标号、药品（从标准库选取）、用药原因、用药时间、剂量、操作人员
-
----
-
-### FR-07 转舍管理（核心事务操作）
-
-将个体从一个圈舍迁移到另一个圈舍，涉及多张表的联动更新。
-
-**核心功能：**
-- 选择转移个体（耳标号）、原圈舍、目标圈舍
-- 后端 `@Transactional` 保障三步原子操作（见第七节）
-
-**UI 设计：** 页面展示"事务一致性保障"说明，直观呈现系统可靠性。
-
----
-
-### FR-08 出栏管理
-
-登记个体出栏，支持销售、屠宰、转移三种出栏类型。
-
-**核心功能：**
-- 记录出栏时间、类型、目的地、重量、价格
-- 自动将个体状态变更为 SOLD，同步扣减圈舍存栏计数
-
----
-
-### FR-15 死亡管理
-
-记录个体死亡事件，个体状态自动同步更新。
-
-**核心功能：**
-- 录入耳标号、死亡日期、死亡原因、记录人及备注
-- 登记完成后个体状态自动变更为"死亡"，存栏统计同步减少
-- 支持按耳标号/死亡原因搜索，分页展示全量死亡台账
-- 可删除误录记录
-
-**角色权限：** 管理员 / 饲养员可见。
-
----
-
-### FR-16 AI 智能咨询
-
-基于阿里云千问大模型的智能对话助手，嵌入系统侧边栏。
-
-**核心功能：**
-- 内置养殖场景 System Prompt，专注回答免疫方案、用药建议、养殖管理等专业问题
-- 支持多轮对话上下文保持
-- 消息气泡区分用户/AI，流畅的聊天界面
-
-**角色权限：** 管理员 / 技术员可见。
-
----
-
-### FR-09 个体全生命周期溯源（核心亮点功能）
-
-输入任意耳标号，系统通过 UNION ALL 跨表查询，生成该个体从入栏到出栏的**完整时间线**。
-
-**时间线事件类型：**
-
-| 事件类型 | 数据来源表 | 展示内容 |
-|----------|----------|----------|
-| ENTRY（入栏）| `animals` + `batches` | 批次号、品种、来源 |
-| IMMUNIZATION（免疫）| `immunization_records` + `drugs_vaccines` | 疫苗名称、剂量、操作人 |
-| MEDICATION（用药）| `medication_records` + `drugs_vaccines` | 药品名称、原因、剂量、操作人 |
-| TRANSFER（转舍）| `pen_transfer_records` + `pens` | 原圈舍 → 目标圈舍、原因 |
-| SLAUGHTER（出栏）| `slaughter_records` | 出栏类型、目的地、重量、价格 |
-
----
-
-### FR-11 三角色权限管理
-
-系统内置**管理员、技术员、饲养员**三种角色，每个角色对应不同的菜单可见范围，登录后自动生效。
-
-#### 角色权限矩阵
-
-| 功能模块 | 管理员 | 技术员 | 饲养员 |
-|----------|:------:|:------:|:------:|
-| 概览仪表盘 | ✅ | ✅ | ❌ |
-| 圈舍管理 | ✅ | ❌ | ✅ |
-| 兽药疫苗库 | ✅ | ✅ | ❌ |
-| 养殖批次 | ✅ | ❌ | ✅ |
-| 个体档案 | ✅ | ✅ | ✅ |
-| 免疫记录 | ✅ | ✅ | ✅ |
-| 用药记录 | ✅ | ✅ | ✅ |
-| 转舍管理 | ✅ | ✅ | ✅ |
-| 出栏管理 | ✅ | ❌ | ✅ |
-| 死亡管理 | ✅ | ❌ | ✅ |
-| 全链路溯源 | ✅ | ✅ | ❌ |
-| AI 智能咨询 | ✅ | ✅ | ❌ |
-| 用户管理 | ✅ | ❌ | ❌ |
-
-#### 实现机制
-
-- **前端侧边栏过滤**：`Sidebar.vue` 中每个菜单项携带 `roles` 数组，通过 `computed` 仅渲染当前角色可访问的菜单项，空分组自动隐藏。
-- **App 层访问守卫**：`App.vue` 的 `watchEffect` 在用户登录或手动改变页面时检查权限，若无权限自动跳转到第一个可访问页（饲养员默认落地圈舍管理）。
-- **角色持久化**：角色字段随用户对象存入 `sessionStorage`，刷新页面后权限状态无丢失。
-- **侧边栏标识**：底部用户信息区域动态展示角色名（管理员青色 / 技术员蓝色 / 饲养员橙色）。
-
----
-
-### FR-10 批次溯源概览
-
-输入批次编码，返回该批次的统计仪表盘和个体明细。
-
-**统计维度：**
-- 批次基本信息（入栏时间、品种、来源）
-- 当前存栏数 / 已出栏数 / 出栏率
-- 免疫事件总次数 / 用药事件总次数
-- 个体明细列表（耳标号、当前状态、所在圈舍）
-
----
-
-### FR-12 数据统计分析（ECharts 可视化）
-
-在独立的统计分析页面，通过 ECharts 图表直观呈现养殖场运营关键指标。
-
-**图表列表：**
-
-| 图表 | 类型 | 数据维度 |
-|------|------|----------|
-| 免疫覆盖趋势 | 折线图（面积渐变） | 近6个月每月免疫记录数量，自动补全空白月份 |
-| 出栏量月度分析 | 柱状图 | 近6个月每月出栏头数 |
-| 个体状态分布 | 圆环饼图 | 在栏（ACTIVE）vs 已出栏（SOLD）比例 |
-| 圈舍容量利用率 | 水平分组条形图 | 各启用圈舍的设计容量与当前存栏量对比 |
-
-**后端接口：**
-
-| 接口 | 说明 |
-|------|------|
-| `GET /api/stats/monthly-slaughter` | 近6个月出栏量，按月分组聚合 |
-| `GET /api/stats/monthly-immunization` | 近6个月免疫次数，按月分组聚合 |
-| `GET /api/stats/animal-status` | 个体状态分布（GROUP BY status） |
-| `GET /api/stats/pen-usage` | 启用圈舍的容量与存栏数 |
-
-**技术实现：** 使用 `DATE_FORMAT(event_time, '%Y-%m') GROUP BY month` 进行 MySQL 月度聚合；前端通过 `onUnmounted` 销毁 ECharts 实例防止内存泄漏；窗口 resize 时自动调用 `chart.resize()`。
-
----
-
-### FR-13 消息通知（主动预警推送）
-
-顶部 Header 右侧铃铛图标，实时展示系统主动检测到的预警信息。
-
-**预警类型：**
-
-| 预警类型 | 触发条件 | 提示级别 |
-|----------|----------|----------|
-| 存栏超容量 | 启用圈舍 `current_count >= capacity` | 警告（橙色） |
-| 免疫接种提醒 | 在栏动物近30天内无接种记录 | 提示（蓝色） |
-
-**交互设计：**
-- 角标数字实时反映未读预警数量，超过 9 条显示 `9+`
-- 点击铃铛弹出下拉面板，点击面板外部自动收起
-- 每 **30 秒**自动轮询 `GET /api/notifications`，新预警无需刷新页面即可感知
-
-**后端实现：** `NotificationController` 复用 `StatisticsMapper` 的两条预警查询（`overcapacityPens`、`immunizationDueAnimals`），动态拼装通知列表返回前端。
-
----
-
-### FR-14 数据导出（Excel / PDF）
-
-在**养殖批次**和**免疫记录**页面各提供「导出 Excel」和「导出 PDF」按钮，所有导出操作均在**浏览器本地**完成，无需后端参与。
-
-**导出范围：** 导出当前搜索/筛选状态下的可见数据（非全量数据），方便按需导出指定批次或时段的记录。
-
-**文件格式说明：**
-
-| 格式 | 实现库 | 特点 |
-|------|--------|------|
-| Excel (.xlsx) | SheetJS (xlsx) | 标准 Excel 格式，支持二次编辑，适合数据留档 |
-| PDF | jsPDF + jspdf-autotable | 横向布局，表头使用主题色（`#0d9488`），自动分页，适合打印存档 |
-
-**文件命名规则：** `<台账类型>_<当前日期>.xlsx / .pdf`，如 `免疫记录_2026-06-09.pdf`。
-
----
-
-## 六、数据库设计
-
-### 6.1 ER 关系图
-
-```
-┌──────────┐         ┌──────────┐
-│  batches  │──1:N──→│  animals │
-└──────────┘         └────┬─────┘
-                          │ ear_tag（全局唯一主键）
-          ┌───────────────┼────────────────┐
-          ▼               ▼                ▼
-┌─────────────────┐ ┌──────────────┐ ┌─────────────────────┐
-│immunization_    │ │ medication_  │ │ pen_transfer_records │
-│records          │ │ records      │ │ (from_pen_id,        │
-│(vaccine_id →    │ │ (drug_id →   │ │  to_pen_id → pens)  │
-│ drugs_vaccines) │ │ drugs_vaccines│ └─────────────────────┘
-└─────────────────┘ └──────────────┘
-                                         ┌──────────────────┐
-                                         │ slaughter_records │
-                                         └──────────────────┘
-                    ┌──────────────────┐
-                    │      pens        │ ←── animals.current_pen_id
-                    │  (current_count  │ ←── pen_transfer_records
-                    │   自动维护)       │
-                    └──────────────────┘
-         ┌──────────────────┐
-         │  drugs_vaccines  │ ←── immunization_records.vaccine_id
-         │  (VACCINE/DRUG)  │ ←── medication_records.drug_id
-         └──────────────────┘
+```text
+填询盘 → AI分析/报价 → 发报价单 → BOM/打样
 ```
 
-### 6.2 核心表结构
+主要功能：
 
-| 表名 | 功能 | 关键字段 | 约束 |
-|------|------|----------|------|
-| `pens` | 圈舍资产 | `pen_code`, `capacity`, `current_count`, `status` | `pen_code` UNIQUE |
-| `drugs_vaccines` | 兽药疫苗标准库 | `category`(VACCINE/DRUG), `generic_name`, `specification` | — |
-| `batches` | 养殖批次 | `batch_code`, `entry_date`, `breed`, `source`, `initial_pen_id` | `batch_code` UNIQUE |
-| `animals` | 个体档案 | `ear_tag`, `gender`, `breed`, `batch_id`, `current_pen_id`, `status` | `ear_tag` UNIQUE |
-| `immunization_records` | 免疫记录 | `ear_tag`, `vaccine_id`, `event_time`, `dosage`, `operator` | — |
-| `medication_records` | 用药记录 | `ear_tag`, `drug_id`, `reason`, `event_time`, `dosage`, `operator` | — |
-| `pen_transfer_records` | 转舍记录 | `ear_tag`, `from_pen_id`, `to_pen_id`, `event_time`, `reason` | — |
-| `slaughter_records` | 出栏记录 | `ear_tag`, `event_time`, `type`(SALE/SLAUGHTER/TRANSFER), `destination`, `weight`, `price` | — |
-| `user` | 用户账户 | `username`, `password`(BCrypt哈希), `email`, `phone`, `role`(admin/technician/feeder) | `username` UNIQUE |
+- 录入客户需求
+- 保存询盘
+- AI分析需求
+- 设置设计费、费用率、目标毛利
+- 自动生成报价单
+- 复制客户报价话术
+- 打印报价单
+- 报价确认后生成 BOM 和打样单
 
-### 6.3 自动初始化设计
+适合场景：
+
+```text
+客户说：我要做1000个亚克力钥匙扣，5cm，双面印刷，发上海，帮我报价。
+```
+
+---
+
+#### 报价/物流助手
+
+用于快速估算：
+
+- 成本
+- 毛利
+- 物流费用
+- 发货风险
+- 经营分析
+
+适合临时测算和辅助销售沟通。
+
+---
+
+#### 营销文案
+
+用于生成：
+
+- 商品标题
+- 小红书文案
+- 抖音短视频脚本
+- 私域朋友圈文案
+- 商品卖点
+- 上架描述
+
+---
+
+### 3. 第二步：设计生产
+
+#### AI设计工坊
+
+当前已简化为真实可操作的两步 AI 生图流程。
+
+流程：
+
+```text
+填写基础信息
+  ↓
+AI生成产品图提示词
+  ↓
+人工修改提示词
+  ↓
+确认生成产品图
+  ↓
+图片进入资产库
+```
+
+用户需要填写：
+
+- 产品名称
+- 产品类型
+- 品牌视觉风格
+- 主题/IP想法
+- 目标人群
+- 使用场景
+- 材质/工艺
+- 想要的视觉风格
+- 反向要求
+
+系统会先调用大模型生成适合产品原型图的提示词，用户可以修改后再生成图片。
+
+---
+
+#### 项目制开发
+
+用于把一个文创主题做成一组可销售产品。
+
+流程：
+
+```text
+建项目 → AI企划 → SKU矩阵 → AI评审 → BOM/打样 → 生产单
+```
+
+主要功能：
+
+- 创建文创项目
+- AI生成项目企划
+- 生成 SKU 矩阵
+- AI评审项目风险
+- 单个 SKU 转 BOM / 打样
+- 成熟 SKU 创建生产单
+- SaaS租户、套餐、模板、用量统计
+
+适合场景：
+
+```text
+我们要做“山城街巷”系列文创，包含钥匙扣、冰箱贴、明信片、贴纸包。
+```
+
+---
+
+#### BOM/打样生产
+
+用于管理生产准备。
+
+主要功能：
+
+- BOM管理
+- 物料清单
+- 工艺清单
+- 成本报价
+- 打样单
+- 生产单
+- 采购建议
+
+---
+
+### 4. 第三步：销售SaaS
+
+#### IP商城
+
+用于展示和销售文创 IP 商品。
+
+主要功能：
+
+- IP作品展示
+- 商品 SKU 展示
+- 模拟购买
+- 生成订单
+
+---
+
+#### 订单履约
+
+用于查看商城订单。
+
+主要功能：
+
+- 订单列表
+- 买家信息
+- 商品明细
+- 支付金额
+- 订单状态
+
+---
+
+#### 物流跟踪
+
+用于真实物流管理。
+
+当前已改为真实 API 模式，不再使用模拟轨迹。
+
+流程：
+
+```text
+在顺丰/中通/圆通等系统生成真实快递单号
+  ↓
+在系统录入真实承运商和真实单号
+  ↓
+点击“快递100真实查询”
+  ↓
+系统调用快递100 API 查询真实轨迹
+  ↓
+保存物流时间线
+  ↓
+签收后自动完成订单
+```
+
+支持：
+
+- 快递100真实查询
+- 快递100订阅推送
+- 物流时间线
+- 异常标记
+- 签收后订单完成
+
+常用快递编码：
+
+| 快递 | 编码 |
+|---|---|
+| 顺丰 | shunfeng |
+| 中通 | zhongtong |
+| 圆通 | yuantong |
+| 申通 | shentong |
+| 韵达 | yunda |
+| 京东物流 | jd |
+| 德邦 | debangwuliu |
+| EMS | ems |
+| 极兔 | jtexpress |
+
+---
+
+#### 智能仓储
+
+用于管理库存、入库、出库、拣货和预警。
+
+流程：
+
+```text
+入库 → 库存增加
+出库 → 锁定库存 → 生成拣货任务
+拣货完成 → 正式扣减库存
+刷新预警 → 识别缺货/低库存/超储
+AI仓储报告 → 给出补货和履约建议
+```
+
+主要功能：
+
+- 库存台账
+- 新增入库
+- 创建出库单
+- 自动生成拣货任务
+- 拣货完成扣库存
+- 缺货预警
+- 低库存预警
+- 超储预警
+- AI仓储报告
+
+---
+
+#### 设计师/创作者
+
+用于查看设计师或创作者信息、作品数据和创作者业务入口。
+
+---
+
+### 5. 系统
+
+#### 账号权限
+
+用于管理系统账号。
+
+当前系统角色：
+
+| 角色 | 说明 |
+|---|---|
+| admin | 运营后台，拥有全部管理权限 |
+| technician | 设计师/业务人员，可使用设计、生产、报价等功能 |
+| feeder | 消费者/普通用户，可查看商城和订单相关内容 |
+
+---
+
+## 五、核心业务流程
+
+### 流程一：客户定制单报价
+
+```text
+1. 进入「询盘到报价」
+2. 填写客户名称、联系人、产品、数量、材质、包装、收货地
+3. 点击「保存询盘并AI分析」
+4. 选择询盘
+5. 设置设计费、费用率、目标毛利
+6. 点击「根据该询盘生成报价」
+7. 进入报价单页
+8. 复制报价话术或打印报价单
+9. 客户确认后点击「确认后生成BOM和打样单」
+```
+
+---
+
+### 流程二：AI生成产品图
+
+```text
+1. 进入「AI设计工坊」
+2. 填写产品名称、产品类型、主题想法、材质工艺、视觉风格
+3. 点击「AI生成产品图提示词」
+4. 在右侧修改提示词
+5. 点击「确认提示词，生成产品图」
+6. 图片自动保存到资产库
+```
+
+---
+
+### 流程三：做一组文创产品
+
+```text
+1. 进入「项目制开发」
+2. 创建项目，例如“山城街巷文创开发项目”
+3. 点击「生成AI企划」
+4. 点击「生成SKU矩阵」
+5. 点击「AI评审」
+6. 选择某个SKU生成BOM/打样
+7. 打样确认后创建生产单
+```
+
+---
+
+### 流程四：订单发货和物流跟踪
+
+```text
+1. 进入「订单履约」查看订单
+2. 真实发货后获得快递单号
+3. 进入「物流跟踪」
+4. 选择订单
+5. 选择快递公司
+6. 填写真实快递单号
+7. 创建真实发货单
+8. 点击「快递100真实查询」
+9. 查看真实物流轨迹
+10. 如果配置了公网回调，可以点击「订阅推送」
+```
+
+---
+
+### 流程五：仓储入库、拣货、出库
+
+```text
+1. 进入「智能仓储」
+2. 入库：填写商品、数量、库位，确认入库
+3. 出库：选择库存，填写数量，创建出库单
+4. 系统自动生成拣货任务
+5. 仓库人员按库位拣货
+6. 点击「确认拣货完成并出库」
+7. 系统正式扣减库存
+8. 点击「刷新预警」查看低库存/缺货/超储
+```
+
+---
+
+## 六、AI能力说明
+
+系统目前统一接入硅基流动 API。
+
+AI能力包括：
+
+- 智能聊天助手
+- 客户询盘分析
+- AI报价建议
+- AI设计企划
+- AI设计评审
+- AI生成产品图提示词
+- AI产品图生成
+- 项目制开发 AI企划
+- SKU矩阵生成
+- 项目AI评审
+- 营销文案生成
+- AI仓储报告
+
+### AI配置
+
+配置文件：
+
+```text
+shixun/application-local.properties
+```
+
+配置示例：
 
 ```properties
-# application.properties
-spring.sql.init.mode=always
-spring.sql.init.schema-locations=classpath:schema.sql
+siliconflow.api.key=你的硅基流动apikey
+siliconflow.chat.model=Qwen/Qwen3-32B
+siliconflow.image.model=Kwai-Kolors/Kolors
+siliconflow.image.edit.model=Qwen/Qwen-Image-Edit-2509
 ```
 
-应用启动时自动执行 `schema.sql`，完成：
-- `CREATE TABLE IF NOT EXISTS`（建表，已存在则跳过）
-- 插入样本数据（圈舍、兽药疫苗、批次、个体档案、各类事件记录）
-
-**优点：** 零配置开箱即用，部署时无需手动建表或导入数据。
+> 注意：AI接口可能需要 20-90 秒，页面上有加载提示，不要重复点击。
 
 ---
 
-## 七、核心技术难点与解决方案
+## 七、物流与仓储说明
 
-### 7.1 转舍操作的数据一致性（最核心难点）
+### 物流是真实API模式
 
-**问题：** 转舍涉及 3 张表的联动修改：
-1. `pen_transfer_records` — 插入转舍记录
-2. `animals` — 更新 `current_pen_id`
-3. `pens` — 原圈舍 `current_count - 1`，目标圈舍 `current_count + 1`
+物流模块已经改为真实快递100 API。
 
-若其中任一步失败（如数据库连接中断），将产生数据不一致（如个体已记录转移但存栏数未更新）。
+没有配置快递100账号时：
 
-**解决方案：** 使用 Spring `@Transactional` 将三步操作封装为一个原子事务。
-
-```java
-// FarmEventService.java
-@Transactional
-public PenTransferRecord transfer(PenTransferRecord record) {
-    // 第①步：插入转舍记录
-    penTransferMapper.insert(record);
-    
-    // 第②步：更新个体当前圈舍
-    animalMapper.updateCurrentPen(record.getEarTag(), record.getToPenId());
-    
-    // 第③步：存栏计数原子调整
-    Integer fromPenId = animalMapper.findCurrentPenId(record.getEarTag());
-    penMapper.decrementCount(fromPenId);   // 原圈舍 -1
-    penMapper.incrementCount(record.getToPenId());  // 目标圈舍 +1
-    
-    // 任意一步抛出异常 → 整体回滚，杜绝脏数据
-    return record;
-}
+```text
+不能查询真实物流
+不会生成假轨迹
 ```
 
-**效果：** 无论发生何种异常，数据库状态要么全部更新，要么全部不变，永远保持一致。
-
----
-
-### 7.2 全链路溯源的跨表聚合查询
-
-**问题：** 个体的生命事件分布在 5 张不同的表中，需要将它们按时间统一排序、展示为连续时间线。
-
-**解决方案：** 使用 SQL `UNION ALL` 将 5 张表的查询结果合并为统一结构，再按 `event_time` 排序。
-
-```sql
-<!-- TraceabilityMapper.xml -->
-SELECT 'ENTRY' AS event_type, a.entry_date AS event_time,
-       CONCAT('批次: ', b.batch_code) AS item_name,
-       CONCAT('入栏，品种: ', a.breed, '，来源: ', b.source) AS detail,
-       NULL AS operator, NULL AS dosage
-FROM animals a LEFT JOIN batches b ON a.batch_id = b.id
-WHERE a.ear_tag = #{earTag}
-
-UNION ALL
-
-SELECT 'IMMUNIZATION', ir.event_time,
-       dv.generic_name,
-       CONCAT('免疫接种: ', dv.generic_name, '，规格: ', dv.specification),
-       ir.operator, ir.dosage
-FROM immunization_records ir
-LEFT JOIN drugs_vaccines dv ON ir.vaccine_id = dv.id
-WHERE ir.ear_tag = #{earTag}
-
-UNION ALL
--- ... 用药、转舍、出栏事件（共5段）
-
-ORDER BY event_time ASC
-```
-
-**效果：** 单次查询即可获取个体完整生命轨迹，时间线数据结构统一，前端无需额外处理。
-
----
-
-### 7.3 耳标号唯一性的双重保障
-
-**问题：** 耳标号是个体的全局唯一标识符，重复写入会导致严重的数据错误。
-
-**解决方案：** 应用层 + 数据库层双重校验。
-
-```java
-// AnimalService.java — 应用层校验
-public Animal create(Animal animal) {
-    if (animalMapper.existsByEarTag(animal.getEarTag())) {
-        throw new IllegalArgumentException("耳标号已存在: " + animal.getEarTag());
-    }
-    animalMapper.insert(animal);
-    return animal;
-}
-```
-
-```sql
--- schema.sql — 数据库层约束
-CREATE TABLE IF NOT EXISTS animals (
-    ear_tag VARCHAR(50) NOT NULL,
-    ...
-    UNIQUE KEY uk_ear_tag (ear_tag)  -- 数据库层兜底
-);
-```
-
-```java
-// AnimalController.java — 返回语义化错误响应
-@PostMapping
-public ResponseEntity<?> create(@RequestBody Animal animal) {
-    try {
-        return ResponseEntity.status(HttpStatus.CREATED).body(animalService.create(animal));
-    } catch (IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                             .body(Map.of("error", e.getMessage()));
-    }
-}
-```
-
-**效果：** 应用层给出友好错误信息（前端展示），数据库唯一索引作为最终防线，两层保障万无一失。
-
----
-
-### 7.4 前端无路由库的单页面架构
-
-**问题：** 项目未引入 Vue Router，需要实现多页面切换。
-
-**解决方案：** 在 `App.vue` 中使用响应式变量 `currentPage` + `v-if` / `v-show` 控制组件显示，`Sidebar.vue` 通过 `$emit` 事件通知父组件切换页面。
-
-```javascript
-// App.vue
-const currentPage = ref('pen')  // 当前激活页面
-
-// Sidebar 发出 navigate 事件时切换
-function handleNavigate(page) {
-    currentPage.value = page
-}
-```
-
-**效果：** 无额外路由库依赖，轻量简洁，适合中等规模的管理后台。
-
----
-
-### 7.5 开发环境跨域问题
-
-**问题：** 前端运行在 5173 端口，后端在 8080 端口，直接请求会触发浏览器跨域限制。
-
-**解决方案：** Vite 开发服务器代理配置。
-
-```javascript
-// vite.config.js
-export default defineConfig({
-    server: {
-        proxy: {
-            '/api': {
-                target: 'http://localhost:8080',
-                changeOrigin: true
-            }
-        }
-    }
-})
-```
-
-**效果：** 开发时所有 `/api/**` 请求无感代理转发到后端，无需修改任何业务代码。
-
----
-
-## 八、API 接口设计
-
-### 8.1 接口规范
-
-| 规范 | 说明 |
-|------|------|
-| 风格 | RESTful API |
-| 数据格式 | JSON (Content-Type: application/json) |
-| 基础路径 | `/api/` |
-| 文档 | Swagger UI: `http://localhost:8080/swagger-ui/index.html` |
-| **分页参数** | 所有列表接口均支持 `?page=1&size=10&search=关键词` 查询参数 |
-| **分页响应** | 传入 `page` 参数时返回 `PageResult<T>` 包装器（`content`、`total`、`page`、`size`、`totalPages`）；不传 `page` 则返回完整 List（向后兼容，供下拉/批量场景使用） |
-
-### 8.2 接口清单
-
-| HTTP 方法 | 接口路径 | 功能 | 功能编号 |
-|-----------|----------|------|----------|
-| GET | `/api/pens` | 获取所有圈舍 | FR-01 |
-| GET | `/api/pens/active` | 获取启用中的圈舍 | FR-01 |
-| POST | `/api/pens` | 新建圈舍 | FR-01 |
-| PUT | `/api/pens/{id}` | 更新圈舍信息 | FR-01 |
-| DELETE | `/api/pens/{id}` | 删除圈舍 | FR-01 |
-| GET | `/api/drugs-vaccines` | 获取兽药疫苗库 | FR-02 |
-| POST | `/api/drugs-vaccines` | 新增品目 | FR-02 |
-| PUT | `/api/drugs-vaccines/{id}` | 更新品目 | FR-02 |
-| DELETE | `/api/drugs-vaccines/{id}` | 删除品目 | FR-02 |
-| GET | `/api/batches` | 获取所有养殖批次 | FR-03 |
-| POST | `/api/batches` | 新建养殖批次 | FR-03 |
-| PUT | `/api/batches/{id}` | 更新批次信息 | FR-03 |
-| DELETE | `/api/batches/{id}` | 删除批次 | FR-03 |
-| GET | `/api/animals` | 获取个体档案列表 | FR-04 |
-| POST | `/api/animals` | 新建个体档案（耳标唯一校验） | FR-04 |
-| GET | `/api/animals/{id}` | 按 ID 查询个体 | FR-04 |
-| GET | `/api/animals/ear-tag/{earTag}` | 按耳标号精确查询 | FR-04 |
-| PUT | `/api/animals/{id}` | 更新个体信息 | FR-04 |
-| DELETE | `/api/animals/{id}` | 删除个体档案 | FR-04 |
-| GET | `/api/events/immunization` | 获取所有免疫记录 | FR-05 |
-| POST | `/api/events/immunization` | 录入免疫记录 | FR-05 |
-| GET | `/api/events/medication` | 获取所有用药记录 | FR-06 |
-| POST | `/api/events/medication` | 录入用药记录 | FR-06 |
-| GET | `/api/events/transfer` | 获取所有转舍记录 | FR-07 |
-| POST | `/api/events/transfer` | **执行转舍（事务操作）** | FR-07 |
-| GET | `/api/events/slaughter` | 获取所有出栏记录 | FR-08 |
-| POST | `/api/events/slaughter` | 登记出栏 | FR-08 |
-| GET | `/api/traceability/animal/{earTag}` | **个体全生命周期溯源** | FR-09 |
-| GET | `/api/traceability/batch/{batchCode}` | **批次溯源统计概览** | FR-10 |
-| GET | `/api/users` | 用户列表 | 系统管理 |
-| POST | `/api/users` | 新增用户 | 系统管理 |
-| POST | `/api/users/login` | 用户登录认证 | 系统管理 |
-| PUT | `/api/users/{id}` | 更新用户信息 | 系统管理 |
-| DELETE | `/api/users/{id}` | 删除用户 | 系统管理 |
-| GET | `/api/stats/monthly-slaughter` | 近6个月出栏量月度统计 | FR-12 |
-| GET | `/api/stats/monthly-immunization` | 近6个月免疫记录月度统计 | FR-12 |
-| GET | `/api/stats/animal-status` | 个体状态分布（在栏/已出栏） | FR-12 |
-| GET | `/api/stats/pen-usage` | 圈舍容量使用情况 | FR-12 |
-| GET | `/api/notifications` | 获取当前活跃预警通知列表 | FR-13 |
-| GET | `/api/events/death` | 获取死亡记录列表（支持分页 + 搜索） | FR-15 |
-| POST | `/api/events/death` | 登记死亡事件，自动更新个体状态 | FR-15 |
-| DELETE | `/api/events/death/{id}` | 删除死亡记录 | FR-15 |
-| POST | `/api/ai/chat` | AI 对话（接入千问大模型，支持多轮） | FR-16 |
-| DELETE | `/api/events/immunization/{id}` | 删除免疫记录 | FR-05 |
-| DELETE | `/api/events/medication/{id}` | 删除用药记录 | FR-06 |
-| DELETE | `/api/events/slaughter/{id}` | 删除出栏记录 | FR-08 |
-
-### 8.3 溯源接口示例
-
-**请求：**
-```
-GET /api/traceability/animal/ET-001
-```
-
-**响应：**
-```json
-{
-  "animal": {
-    "earTag": "ET-001",
-    "gender": "MALE",
-    "breed": "杜洛克猪",
-    "batchCode": "BATCH-2024-001",
-    "currentPenName": "A号猪舍",
-    "status": "ACTIVE"
-  },
-  "timeline": [
-    {
-      "eventType": "ENTRY",
-      "eventTime": "2024-01-15T08:00:00",
-      "itemName": "批次: BATCH-2024-001",
-      "detail": "入栏，品种: 杜洛克猪，来源: 山东育种场"
-    },
-    {
-      "eventType": "IMMUNIZATION",
-      "eventTime": "2024-02-01T09:30:00",
-      "itemName": "猪瘟活疫苗",
-      "detail": "免疫接种: 猪瘟活疫苗，规格: 100mL/瓶",
-      "operator": "张三",
-      "dosage": "1头份"
-    },
-    {
-      "eventType": "TRANSFER",
-      "eventTime": "2024-03-10T14:00:00",
-      "itemName": "A号猪舍 → B号猪舍",
-      "detail": "转舍，原因: 分群管理"
-    }
-  ]
-}
-```
-
----
-
-## 九、安全设计
-
-| 安全域 | 实现方案 | 说明 |
-|--------|----------|------|
-| **密码存储** | BCryptPasswordEncoder | 强哈希（自适应迭代），彻底杜绝明文存储，即使数据库泄露也无法还原密码 |
-| **SQL 注入防御** | MyBatis 参数化查询 `#{}` | 所有 SQL 均使用预编译占位符，禁止字符串拼接，从根本上防止 SQL 注入 |
-| **密码字段隔离** | `@JsonProperty(WRITE_ONLY)` | 用户对象序列化为 JSON 时自动屏蔽 `password` 字段，防止密码哈希值泄漏到响应体 |
-| **唯一性校验** | 应用层 + 数据库双重校验 | 关键唯一字段（耳标号、用户名等）在数据库设置 UNIQUE 约束作为兜底 |
-| **角色权限控制** | 前端双重守卫（Sidebar + App） | 侧边栏按角色过滤可见菜单；`watchEffect` 在页面切换和刷新时强制校验访问权限，非法页面自动重定向 |
-
----
-
-## 十、快速启动
-
-### 10.1 环境要求
-
-| 依赖 | 版本要求 |
-|------|----------|
-| JDK | 17+ |
-| Maven | 3.6+ |
-| MySQL | 8.x |
-| Node.js | 18+ |
-| npm | 9+ |
-
-### 10.2 数据库配置
-
-创建数据库（**建表由应用自动完成，无需手动执行 SQL**）：
-
-```sql
-CREATE DATABASE IF NOT EXISTS shixun CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-按需修改数据库连接信息：
+配置示例：
 
 ```properties
-# shixun/src/main/resources/application.properties
-spring.datasource.url=jdbc:mysql://localhost:3306/shixun?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
-spring.datasource.username=root
-spring.datasource.password=123456    # ← 修改为实际密码
+kuaidi100.customer=你的customer
+kuaidi100.key=你的key
+kuaidi100.callback-url=https://你的域名/api/logistics/callback/kuaidi100
+kuaidi100.salt=可选
 ```
 
-### 10.3 启动后端
+其中：
+
+- `customer` 和 `key` 用于真实查询
+- `callback-url` 用于订阅推送，必须是公网可访问地址
+- 本地 localhost 不能作为快递100回调地址
+
+---
+
+### 仓储当前规则
+
+仓储预警规则：
+
+```text
+可用库存 <= 0        缺货预警
+可用库存 <= 安全库存   低库存预警
+总库存 > 库存上限      超储预警
+```
+
+库存计算：
+
+```text
+可用库存 = 总库存 - 锁定库存
+```
+
+出库逻辑：
+
+```text
+创建出库单时：锁定库存
+拣货完成时：扣减总库存和锁定库存
+```
+
+---
+
+## 八、本地启动
+
+### 1. 启动 MySQL
+
+本地数据库默认：
+
+```text
+数据库：shixun
+账号：root
+密码：123456
+```
+
+### 2. 启动后端
 
 ```bash
 cd shixun
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
-启动成功后：
-- 后端 API：`http://localhost:8080`
-- Swagger 文档：`http://localhost:8080/swagger-ui/index.html`
-- 数据库自动建表 + 插入样本数据
+后端地址：
 
-### 10.4 启动前端（开发模式）
+```text
+http://localhost:8080/
+```
+
+### 3. 启动前端
 
 ```bash
 cd shixun-vue
 npm install
-npm run dev
+npm run dev -- --host 0.0.0.0
 ```
 
-访问：`http://localhost:5173`
+前端地址：
 
-### 10.5 生产构建
+```text
+http://localhost:5173/
+```
+
+---
+
+## 九、阿里云部署
+
+项目已提供一键部署脚本：
+
+```text
+scripts/aliyun-start.sh
+```
+
+详细部署说明见：
+
+```text
+DEPLOY_ALIYUN.md
+```
+
+### 快速部署
 
 ```bash
-cd shixun-vue
-npm run build
-# 构建产物: shixun-vue/dist/
+cd /opt/smart_pig
+cp deploy/env.example .env
+vim .env
+
+set -a
+source .env
+set +a
+
+bash scripts/aliyun-start.sh deploy
 ```
 
-### 10.6 默认账号
+部署后访问：
 
-系统启动后自动初始化以下测试账号（通过 API `POST /api/users` 创建的账号密码经 BCrypt 加密，可正常登录）：
-
-| 用户名 | 密码 | 角色 | 可访问模块 |
-|--------|------|------|-----------|
-| `testuser` | `123456` | 管理员 | 全部模块 |
-| `admin` | `123456` | 管理员 | 全部模块 |
-| `tech01` | `123456` | 技术员 | 仪表盘、兽药疫苗库、个体档案、免疫/用药/转舍记录、溯源 |
-| `feeder01` | `123456` | 饲养员 | 圈舍管理、养殖批次、个体档案、免疫/用药/转舍/出栏记录 |
-
-> **注意：** `schema.sql` 中预置账号的密码为明文（历史遗留），建议通过用户管理界面重新创建账号以使用 BCrypt 加密密码。
-
----
-
-## 十一、项目总结与展望
-
-### 11.1 项目成果
-
-本项目从零构建了一套完整的全栈养殖场管理系统，实现了：
-
-| 成果 | 详情 |
-|------|------|
-| **功能完整性** | 16 个核心功能模块（FR-01 ~ FR-16），覆盖养殖全流程及可视化决策支持 |
-| **技术栈完整** | 前后端分离架构，Spring Boot + MyBatis + MySQL + Vue 3 + TypeScript + ECharts + SheetJS + jsPDF |
-| **代码规模** | 后端 11 个 Controller、8 个 Service、12 个 Mapper；前端 21 个 Vue 组件（全量 TypeScript） |
-| **数据可靠性** | 事务原子操作 + 双重唯一性校验，核心业务数据零差错 |
-| **可视化决策** | 4 类 ECharts 图表（折线/柱状/饼图/条形图），MySQL 月度聚合查询驱动 |
-| **主动预警** | 30s 轮询通知机制，超容量、免疫到期两类预警自动推送 |
-| **数据导出** | Excel/PDF 纯前端生成，无后端依赖，导出当前筛选数据，文件名含日期 |
-| **开箱即用** | 数据库自动初始化 + 样本数据预置，一键启动即可体验完整功能 |
-
-### 11.2 核心亮点总结
-
-1. **事务驱动的数据一致性**：转舍操作通过 `@Transactional` 将跨表联动封装为原子事务，解决了并发场景下数据不一致的根本问题。
-
-2. **UNION ALL 全链路溯源**：单条 SQL 横向聚合 5 张事件表，生成统一时间线视图，溯源查询无需多次往返数据库。
-
-3. **双重唯一性保障**：耳标号在应用层和数据库层各有一道校验，确保核心标识符的唯一性在任何情况下都不被破坏。
-
-4. **ECharts 多维可视化**：引入 Apache ECharts 构建统计分析页，折线图/柱状图/饼图/条形图四类图表覆盖免疫趋势、出栏分析、状态分布、圈舍容量四个维度，组件销毁时自动释放图表实例。
-
-5. **主动通知机制**：顶部铃铛组件30秒轮询预警接口，超容量圈舍和接种到期两类预警实时推送，角标计数与面板收起逻辑解耦。
-
-6. **轻量依赖设计**：前端无 Vuex/Pinia/Axios/Element Plus 等重型依赖，新增 ECharts/xlsx/jsPDF 均为按需引入的专项工具库，保持项目可控。
-
-### 11.3 未来展望
-
-| 方向 | 具体建议 |
-|------|----------|
-| **认证升级** | 引入 JWT Token 实现无状态认证，支持多端访问 |
-| ~~**权限管理**~~ | ~~增加 RBAC 角色权限控制~~ **✅ 已实现**（管理员 / 技术员 / 饲养员三角色，见 FR-11） |
-| ~~**数据统计**~~ | ~~引入 ECharts 实现可视化图表~~ **✅ 已实现**（4 类图表，见 FR-12） |
-| ~~**消息通知**~~ | ~~接种到期提醒、存栏超容量预警等主动推送~~ **✅ 已实现**（见 FR-13） |
-| ~~**数据导出**~~ | ~~支持批次台账、免疫记录导出为 Excel/PDF~~ **✅ 已实现**（见 FR-14） |
-| **移动端适配** | 响应式布局改造，支持手机端巡栏录入 |
-| **WebSocket 实时推送** | 将通知轮询升级为 WebSocket 长连接，降低延迟和请求开销 |
-| **图片存储优化** | 当前兽药疫苗图片以 Base64 存入数据库，数据量大时建议改为对象存储（OSS/MinIO），数据库仅存 URL |
-| **AI 功能扩展** | 结合历史用药/免疫数据生成个性化养殖建议，或接入语音输入方便现场录入 |
-
----
-
-## 附录
-
-### 项目结构
-
-```
-shixun_workspace/
-├── README.md                         # 本文档
-├── shixun/                           # Spring Boot 后端
-│   ├── pom.xml                       # Maven 依赖
-│   └── src/main/
-│       ├── java/com/example/shixun/
-│       │   ├── config/
-│       │   │   ├── DataInitializer.java
-│       │   │   └── OpenApiConfig.java
-│       │   ├── controller/           # 11 个 REST 控制器
-│       │   │   ├── PenController.java
-│       │   │   ├── AnimalController.java
-│       │   │   ├── BatchController.java
-│       │   │   ├── DrugVaccineController.java
-│       │   │   ├── FarmEventController.java    # 免疫/用药/转舍/出栏/死亡事件
-│       │   │   ├── UserController.java
-│       │   │   ├── TraceabilityController.java
-│       │   │   ├── StatisticsController.java
-│       │   │   ├── NotificationController.java
-│       │   │   ├── AiChatController.java       ← 千问 AI 对话
-│       │   │   └── ProductController.java
-│       │   ├── service/              # 8 个业务逻辑层
-│       │   ├── mapper/               # 12 个 MyBatis Mapper 接口
-│       │   └── model/                # 实体类 + PageResult<T> 分页包装器
-│       └── resources/
-│           ├── application.properties
-│           ├── schema.sql            # 建表 + 样本数据（含 death_records）
-│           └── mapper/               # 12 个 MyBatis XML 文件
-└── shixun-vue/                       # Vue 3 + TypeScript 前端
-    ├── package.json                  # echarts / xlsx / jspdf / typescript 依赖
-    ├── vite.config.ts
-    └── src/
-        ├── main.ts
-        ├── App.vue
-        ├── types/index.ts            # 全局 TypeScript 类型定义
-        ├── style.css                 # 全局设计系统变量
-        └── components/               # 21 个 Vue 组件（全量 TypeScript）
-            ├── Modal.vue             # 通用弹窗组件
-            ├── GlobalAlert.vue       # 全局通知
-            ├── Sidebar.vue
-            ├── Dashboard.vue
-            ├── LoginPage.vue
-            ├── StatisticsView.vue    # ECharts 统计分析
-            ├── NotificationPanel.vue # 铃铛预警面板
-            ├── AiChat.vue            # AI 智能咨询
-            ├── PenManagement.vue
-            ├── BatchManagement.vue
-            ├── AnimalManagement.vue
-            ├── DrugVaccineManagement.vue
-            ├── ImmunizationManagement.vue  # 含批量录入
-            ├── MedicationManagement.vue
-            ├── PenTransferManagement.vue
-            ├── SlaughterManagement.vue
-            ├── DeathManagement.vue         # 死亡管理 FR-15
-            ├── TraceabilityView.vue
-            └── UserManagement.vue
-```
-
-### Git 信息
-
-```
-主分支：master
-作者：gaotianyi
+```text
+http://服务器公网IP:8080/
 ```
 
 ---
 
-## 十二、近期升级记录
+## 十、常用运维命令
 
-### v1.1 — 2026-06-09
+```bash
+# 一键部署并启动
+bash scripts/aliyun-start.sh deploy
 
-本次升级新增三大功能模块，覆盖数据可视化、主动预警和数据导出三个方向。
+# 查看状态
+bash scripts/aliyun-start.sh status
 
-#### FR-12 数据统计分析
+# 查看日志
+bash scripts/aliyun-start.sh logs
 
-- 新增独立的「数据统计分析」页面，侧边栏菜单（admin / technician 可见）
-- 后端新增 `StatisticsController` + `StatisticsMapper`，4 条 MySQL 聚合查询接口
-- 前端集成 Apache ECharts 5.x，实现 4 类图表：
-  - **免疫覆盖趋势**（折线图 + 面积渐变，近6个月，自动补全空白月份）
-  - **出栏量月度分析**（柱状图，近6个月）
-  - **个体状态分布**（圆环饼图，在栏 vs 已出栏）
-  - **圈舍容量利用率**（水平分组条形图，设计容量 vs 当前存栏）
-- 组件卸载时自动 `dispose()` ECharts 实例，防止内存泄漏
+# 重启服务
+bash scripts/aliyun-start.sh restart
 
-#### FR-13 消息通知
+# 停止服务
+bash scripts/aliyun-start.sh stop
 
-- 顶部 Header 新增铃铛图标（`NotificationPanel.vue`），角标显示未读预警数
-- 每 30 秒自动轮询 `GET /api/notifications`，无需手动刷新
-- 后端 `NotificationController` 实现两类预警检测：
-  - **存栏超容量**：`current_count >= capacity` 的启用圈舍
-  - **免疫接种提醒**：近30天内未接种的在栏动物数量
-- 点击面板外部自动收起，交互体验友好
+# 只构建
+bash scripts/aliyun-start.sh build
 
-#### FR-14 数据导出（Excel / PDF）
-
-- 在**养殖批次**页面新增「导出 Excel」「导出 PDF」按钮
-- 在**免疫记录**页面新增「导出 Excel」「导出 PDF」按钮
-- 导出范围为当前搜索筛选结果（非全量）
-- Excel 使用 SheetJS 生成 `.xlsx`；PDF 使用 jsPDF + AutoTable 生成横向布局
-- 文件名含当前日期，表头使用品牌色 `#0d9488`，适合打印留档
+# 只启动已有 jar
+bash scripts/aliyun-start.sh start
+```
 
 ---
 
-### v1.2 — 2026-06-12
+## 十一、配置说明
 
-本次升级完成全面工程化改造，新增两个功能模块，并落地 TypeScript 全量迁移与服务端分页。
+### 后端配置文件
 
-#### 工程化：全面迁移至 TypeScript
+主配置：
 
-- 所有 21 个 Vue 组件改写为 `<script setup lang="ts">`，引入完整类型约束
-- 新增 `src/types/index.ts` 统一类型定义文件，规范实体类型（`Animal`、`ImmunizationRecord`、`PageResult<T>` 等）
-- 引入 `vue-tsc` 做编译期静态类型检查
+```text
+shixun/src/main/resources/application.properties
+```
 
-#### 服务端分页：全量改造（10 个管理模块）
+本地/服务器私密配置：
 
-- 后端新增通用 `PageResult<T>` 响应包装器，字段：`content`、`total`、`page`、`size`、`totalPages`
-- 所有管理列表接口统一支持 `?page=X&size=Y&search=关键词` 查询参数
-- **向后兼容设计**：不传 `page` 参数时仍返回完整 `List`，供批量操作下拉选项和溯源查询等场景使用
-- 前端各组件新增「每页条数」选择器（5 / 10 / 20 / 50 条/页），分页栏样式统一
-- 改造范围：圈舍、兽药疫苗库、养殖批次、个体档案、免疫记录、用药记录、转舍管理、出栏管理、死亡管理、用户管理
+```text
+shixun/application-local.properties
+```
 
-#### FR-15 死亡管理（新增）
+`application-local.properties` 不建议提交 Git。
 
-- 新增「死亡管理」模块，管理员 / 饲养员可见
-- 后端新增 `death_records` 表及 `/api/events/death` 系列接口
-- 登记死亡后个体状态自动变更为"死亡"，存栏统计同步更新
-- 支持按耳标号 / 死亡原因搜索，服务端分页
+### 服务器环境变量模板
 
-#### FR-16 AI 智能咨询（新增）
+```text
+deploy/env.example
+```
 
-- 新增 `AiChat.vue` AI 对话面板，接入阿里云千问（Qwen）大模型 API
-- 后端 `AiChatController` 代理请求，内置养殖专业场景 System Prompt
-- 支持多轮对话，消息气泡区分用户/AI，管理员 / 技术员可见
+复制为：
 
-#### 用药记录导出（新增）
+```bash
+cp deploy/env.example .env
+```
 
-- 在**用药记录**页面补充「导出 Excel」「导出 PDF」按钮，与批次/免疫页保持一致
+---
 
-#### 批量免疫录入改造
+## 十二、注意事项
 
-- 弹窗重构为「参数配置区（上）+ 动物列表（下）」全宽单列布局，消除畸形排版问题
-- 动物列表改为 5 列 CSS Grid（复选框 / 耳标号 / 圈舍 / 品种 / 免疫状态），文字不再截断
-- 修复竞态条件：改为先获取全量免疫记录后再打开弹窗，消除"已免疫"状态徽章闪烁问题
-- 移除"只显示未免疫"过滤器，改为直接在列表行内展示"已免疫"状态徽章
-- 疫苗下拉默认提示显示可选数量（`共 N 种`）
-- 确认按钮与工具栏已选计数格式统一为 `X/Y 只`
+1. 默认账号 `admin / 123456` 仅适合测试，正式部署后请修改密码。
+2. 硅基流动 API Key、快递100 Key 不要提交到 Git。
+3. 真实物流必须填写真实快递单号，系统不会再生成模拟物流轨迹。
+4. 快递100订阅推送需要公网域名，不能使用 localhost。
+5. 生产环境建议使用阿里云 RDS MySQL。
+6. 如果访问不了服务器，优先检查阿里云安全组是否开放 8080 端口。
+7. AI生图、AI分析、物流查询都依赖第三方接口，请保证服务器可以访问公网。
+
+---
+
+## 当前系统一句话总结
+
+这是一个面向文创产品公司的 AI 经营中台，可以从客户询盘开始，一路完成报价、设计、SKU开发、BOM打样、订单、仓储、物流和SaaS化运营。

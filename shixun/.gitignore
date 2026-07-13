@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Local secrets
+application-local.properties
+shixun-vue/public/generated/
+shixun-vue/public/uploads/

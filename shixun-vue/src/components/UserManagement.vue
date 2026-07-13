@@ -16,11 +16,11 @@ const isEdit = ref<boolean>(false)
 const form = ref<UserForm>({ id: '', username: '', age: '', email: '', phone: '', password: '', role: 'admin' })
 
 const roleOptions: Array<{ value: Role; label: string }> = [
-  { value: 'admin',      label: '管理员' },
-  { value: 'technician', label: '技术员' },
-  { value: 'feeder',     label: '饲养员' },
+  { value: 'admin',      label: '运营后台' },
+  { value: 'technician', label: '设计师' },
+  { value: 'feeder',     label: '消费者' },
 ]
-const roleLabelMap: Record<Role, string> = { admin: '管理员', technician: '技术员', feeder: '饲养员' }
+const roleLabelMap: Record<Role, string> = { admin: '运营后台', technician: '设计师', feeder: '消费者' }
 const roleBadgeClass: Record<Role, string> = { admin: 'badge-admin', technician: 'badge-tech', feeder: 'badge-feeder' }
 const searchQuery = ref<string>('')
 const currentPage = ref<number>(1)
@@ -136,7 +136,7 @@ function initial(name) { return name ? name.charAt(0).toUpperCase() : '?' }
     <div class="page-header">
       <div>
         <h2 class="page-title">用户管理</h2>
-        <p class="page-desc">管理系统中的所有注册用户账号</p>
+        <p class="page-desc">管理平台消费者、设计师与运营后台账号</p>
       </div>
       <button class="btn btn-primary" @click="openAdd">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>

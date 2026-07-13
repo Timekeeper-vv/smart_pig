@@ -1,84 +1,49 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { User, PageName, Role } from '../types'
+import andTasteLogo from '../assets/and_taste.png'
 
-interface MenuItem {
-  key: PageName
-  label: string
-  roles: Role[]
-  icon: string
-}
+interface MenuItem { key: PageName; label: string; roles: Role[]; icon: string }
+interface MenuGroup { group: string; items: MenuItem[] }
 
-interface MenuGroup {
-  group: string
-  items: MenuItem[]
-}
+const props = defineProps<{ currentUser: User; currentPage: PageName; collapsed: boolean }>()
+const emit = defineEmits<{ 'switch-page': [page: PageName]; 'logout': []; 'toggle': [] }>()
 
-const props = defineProps<{
-  currentUser: User
-  currentPage: PageName
-  collapsed: boolean
-}>()
-
-const emit = defineEmits<{
-  'switch-page': [page: PageName]
-  'logout': []
-  'toggle': []
-}>()
-
-const roleLabels: Record<Role, string> = { admin: '管理员', technician: '技术员', feeder: '饲养员' }
-const roleColors: Record<Role, string> = { admin: '#0d9488', technician: '#2563eb', feeder: '#d97706' }
+const roleLabels: Record<Role, string> = { admin: '运营后台', technician: '设计师', feeder: '消费者' }
+const roleColors: Record<Role, string> = { admin: '#f97316', technician: '#7c3aed', feeder: '#0d9488' }
 
 const allMenus: MenuGroup[] = [
-  {
-    group: '概览',
-    items: [
-      { key: 'dashboard',  label: '仪表盘',     roles: ['admin', 'technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>` },
-      { key: 'statistics', label: '数据统计分析', roles: ['admin', 'technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>` },
-    ]
-  },
-  {
-    group: '基础数据',
-    items: [
-      { key: 'pens',  label: '圈舍管理',  roles: ['admin', 'feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>` },
-      { key: 'drugs', label: '兽药疫苗库', roles: ['admin', 'technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>` },
-    ]
-  },
-  {
-    group: '养殖资产',
-    items: [
-      { key: 'batches', label: '养殖批次', roles: ['admin', 'feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>` },
-      { key: 'animals', label: '个体档案', roles: ['admin', 'technician', 'feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>` },
-    ]
-  },
-  {
-    group: '生产记录',
-    items: [
-      { key: 'immunization', label: '免疫记录', roles: ['admin', 'technician', 'feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>` },
-      { key: 'medication',   label: '用药记录', roles: ['admin', 'technician', 'feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.5 20H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H20a2 2 0 0 1 2 2v3"/><circle cx="18" cy="18" r="3"/><path d="m22 22-1.5-1.5"/></svg>` },
-      { key: 'transfer',     label: '转舍管理', roles: ['admin', 'technician', 'feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` },
-      { key: 'slaughter',    label: '出栏管理', roles: ['admin', 'feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>` },
-      { key: 'death',        label: '死亡管理', roles: ['admin', 'technician', 'feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>` },
-    ]
-  },
-  {
-    group: '溯源 & 系统',
-    items: [
-      { key: 'traceability', label: '全链路溯源', roles: ['admin', 'technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>` },
-      { key: 'users',        label: '用户管理',  roles: ['admin'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>` },
-    ]
-  },
+  { group: '总览', items: [
+    { key: 'dashboard', label: '经营看板', roles: ['admin','technician','feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>` },
+  ]},
+  { group: '第一步：接单报价', items: [
+    { key: 'commercialMvp', label: '询盘到报价', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/></svg>` },
+    { key: 'businessAi', label: '报价/物流助手', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg>` },
+    { key: 'marketing', label: '营销文案', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>` },
+  ]},
+  { group: '第二步：设计生产', items: [
+    { key: 'studio', label: 'AI设计工坊', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/><path d="M19 15l.9 2.7L22 19l-2.1.7L19 22l-.9-2.3L16 19l2.1-1.3L19 15z"/></svg>` },
+    { key: 'scaleUp', label: '项目制开发', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16"/><path d="M7 16V8"/><path d="M12 16V5"/><path d="M17 16v-3"/></svg>` },
+    { key: 'production', label: 'BOM/打样生产', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><path d="M6 3v18"/><path d="M18 3v10"/></svg>` },
+  ]},
+  { group: '第三步：销售SaaS', items: [
+    { key: 'marketplace', label: 'IP商城', roles: ['admin','technician','feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>` },
+    { key: 'orders', label: '订单履约', roles: ['admin','technician','feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 4h9L18 2"/><path d="M3 6h18l-2 15H5L3 6z"/><path d="M9 11h6"/></svg>` },
+    { key: 'logistics', label: '物流跟踪', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>` },
+    { key: 'warehouse', label: '智能仓储', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5"/><path d="M12 22V12"/></svg>` },
+    { key: 'designers', label: '设计师/创作者', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>` },
+  ]},
+  { group: '系统', items: [
+    { key: 'users', label: '账号权限', roles: ['admin'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>` },
+  ]},
 ]
 
 const menus = computed<MenuGroup[]>(() => {
   const role: Role = props.currentUser?.role || 'admin'
-  return allMenus
-    .map(g => ({ ...g, items: g.items.filter(item => item.roles.includes(role)) }))
-    .filter(g => g.items.length > 0)
+  return allMenus.map(g => ({ ...g, items: g.items.filter(item => item.roles.includes(role)) })).filter(g => g.items.length > 0)
 })
-
-const currentRoleLabel = computed<string>(() => roleLabels[props.currentUser?.role] || '管理员')
-const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.role] || '#0d9488')
+const currentRoleLabel = computed<string>(() => roleLabels[props.currentUser?.role] || '运营后台')
+const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.role] || '#f97316')
 </script>
 
 <template>
@@ -86,15 +51,12 @@ const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.ro
     <!-- Logo -->
     <div class="sidebar-logo">
       <div class="logo-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
+        <img :src="andTasteLogo" alt="之间味道 logo" />
       </div>
       <transition name="fade">
         <div v-if="!collapsed" class="logo-text">
-          <span class="logo-title">智慧养殖平台</span>
-          <span class="logo-sub">Farm Management</span>
+          <span class="logo-title">之间智造</span>
+          <span class="logo-sub">文创产品智能体平台</span>
         </div>
       </transition>
     </div>
@@ -172,13 +134,20 @@ const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.ro
 .logo-icon {
   width: 32px;
   height: 32px;
-  background: var(--c-primary);
+  background: #fff;
   border-radius: var(--r);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  overflow: hidden;
   flex-shrink: 0;
+}
+
+.logo-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .logo-text {

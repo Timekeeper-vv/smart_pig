@@ -1,2 +1,14 @@
 # Claude Code local config
 .claude/
+
+# Local secrets
+application-local.properties
+shixun-vue/public/generated/
+shixun-vue/public/uploads/
+
+.env
+logs/
+runtime/
+shixun/target/
+shixun-vue/node_modules/
+shixun-vue/dist/

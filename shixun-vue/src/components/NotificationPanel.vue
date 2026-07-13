@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import type { Notification } from '../types'
 
-const notifications = ref<Notification[]>([])
+
+type SystemNotification = { type: 'warning' | 'info'; category?: string; title: string; message: string }
+const notifications = ref<SystemNotification[]>([])
 const open = ref<boolean>(false)
 const unread = ref<number>(0)
 let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -12,7 +13,7 @@ async function fetchNotifications() {
     const res = await fetch('/api/notifications')
     if (res.ok) {
       notifications.value = await res.json()
-      unread.value = notifications.value.length
+      if (!open.value) unread.value = notifications.value.length
     }
   } catch { /* silent */ }
 }
@@ -44,7 +45,7 @@ function onDocClick(e: MouseEvent): void {
 
 <template>
   <div class="notif-wrap">
-    <button class="notif-btn" :class="{ active: open }" @click.stop="togglePanel" title="消息通知">
+    <button class="notif-btn" :class="{ active: open }" @click.stop="togglePanel" title="系统预警">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
         <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
@@ -55,14 +56,14 @@ function onDocClick(e: MouseEvent): void {
     <transition name="panel">
       <div v-if="open" class="notif-panel" @click.stop>
         <div class="panel-header">
-          <span class="panel-title">消息通知</span>
+          <span class="panel-title">系统预警</span>
           <span class="panel-count">{{ notifications.length }} 条</span>
         </div>
 
         <div class="panel-body">
           <div v-if="notifications.length === 0" class="notif-empty">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <p>暂无待处理预警</p>
+            <p>暂无仓储、物流、履约预警</p>
           </div>
 
           <div
@@ -78,7 +79,7 @@ function onDocClick(e: MouseEvent): void {
               <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             </div>
             <div class="notif-content">
-              <div class="notif-title">{{ n.title }}</div>
+              <div class="notif-title"><span>{{ n.title }}</span><em v-if="n.category">{{ n.category }}</em></div>
               <div class="notif-msg">{{ n.message }}</div>
             </div>
           </div>
@@ -209,10 +210,23 @@ function onDocClick(e: MouseEvent): void {
 }
 
 .notif-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
   font-size: 13px;
   font-weight: 600;
   color: var(--c-text);
   margin-bottom: 2px;
+}
+.notif-title em {
+  font-style:normal;
+  font-size:10px;
+  color:var(--c-text-3);
+  background:var(--c-bg);
+  border-radius:999px;
+  padding:2px 6px;
+  flex-shrink:0;
 }
 
 .notif-msg {

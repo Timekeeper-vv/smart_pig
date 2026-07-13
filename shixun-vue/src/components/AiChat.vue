@@ -10,7 +10,7 @@ const open = ref(false)
 const loading = ref(false)
 const inputText = ref('')
 const messages = ref<Message[]>([
-  { role: 'assistant', content: '你好！我是智慧养殖 AI 助手，可以回答关于畜牧养殖、疫病防治、饲养管理等专业问题，请问有什么可以帮你？' }
+  { role: 'assistant', content: '你好！我是之间味道 AI 助手，可以协助你梳理图片IP、文创商品、设计师运营、订单履约和平台转型方案。' }
 ])
 const messagesEnd = ref<HTMLElement | null>(null)
 
@@ -94,8 +94,8 @@ function clearHistory() {
         <div class="ai-header-info">
           <div class="ai-avatar">AI</div>
           <div>
-            <div class="ai-title">养殖 AI 助手</div>
-            <div class="ai-subtitle">畜牧养殖专业问答</div>
+            <div class="ai-title">之间味道 AI 助手</div>
+            <div class="ai-subtitle">文创电商运营问答</div>
           </div>
         </div>
         <button class="ai-clear-btn" @click="clearHistory" title="清空对话">

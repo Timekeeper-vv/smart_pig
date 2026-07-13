@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { User } from '../types'
+import andTasteLogo from '../assets/and_taste.png'
 
 const emit = defineEmits<{ login: [user: User] }>()
 
@@ -9,56 +10,56 @@ const toggleLang = () => { lang.value = lang.value === 'en' ? 'zh' : 'en' }
 
 const translations = {
   en: {
-    navBrand: 'SmartFarm',
+    navBrand: '之间智造',
     navLogin: 'Log In',
     navSignup: 'Sign Up',
-    heroEyebrow: 'INTELLIGENT LIVESTOCK MANAGEMENT',
-    heroTitle1: 'Smart Farm',
-    heroTitle2: 'Management',
-    heroSub: 'Complete digital solution for modern livestock farming —\nfrom individual tracking to full-chain traceability.',
+    heroEyebrow: 'AI CREATIVE MANUFACTURING',
+    heroTitle1: '之间智造',
+    heroTitle2: '之间味道-文创产品智能体平台',
+    heroSub: 'From concept to product — an agentic platform for cultural creative design, prototyping, manufacturing and launch.',
     heroCta: 'Get Started',
     scrollHint: 'Explore Features',
 
-    f1Badge: 'Animal Records',
-    f1Title1: 'Complete Animal',
-    f1Title2: 'Lifecycle Tracking',
-    f1Desc: 'Every animal receives a unique ear tag from day one. Track breed, pen location, entry date, health status, and the full history of transfers, vaccinations, and treatments — all in one place.',
-    f1p1: 'Auto-generated unique ear tag numbers',
-    f1p2: 'Real-time stock status (Active / Sold)',
-    f1p3: 'Full pen transfer audit trail',
+    f1Badge: 'Artwork Library',
+    f1Title1: 'Visual IP',
+    f1Title2: 'Catalog Management',
+    f1Desc: 'Build a high-resolution artwork library with categories, tags, stories, licensing status, and review workflow for monetizable creative assets.',
+    f1p1: 'Upload, categorize, and tag image IP',
+    f1p2: 'Manage story, license, and audit status',
+    f1p3: 'Map one artwork to multiple creative SKUs',
 
-    f2Badge: 'Traceability',
-    f2Title1: 'End-to-End',
-    f2Title2: 'Chain Traceability',
-    f2Desc: 'Query the complete life history of any individual or batch through ear tag or batch code. Every event — entry, vaccination, transfer, slaughter — is timestamped and permanently recorded.',
-    f2p1: 'Search by ear tag or batch code',
-    f2p2: 'Full chronological event timeline',
-    f2p3: 'Food safety compliance ready',
+    f2Badge: 'Creative Commerce',
+    f2Title1: 'Artwork-to-SKU',
+    f2Title2: 'Product Sales',
+    f2Desc: 'Turn one illustration into postcards, prints, phone cases, canvas bags, stickers, and other cultural creative products with rich visual storytelling.',
+    f2p1: 'Multi-SKU pricing, material, and stock',
+    f2p2: 'Custom size, material, and signed editions',
+    f2p3: 'Cart, checkout, and order tracking ready',
 
-    f3Badge: 'Health & Safety',
-    f3Title1: 'Vaccination &',
-    f3Title2: 'Medication Records',
-    f3Desc: 'Schedule and log every vaccination and treatment. Operators are auto-bound to their account — no manual entry, no errors. Automated alerts surface animals overdue for immunization.',
-    f3p1: 'Operator identity locked to login account',
-    f3p2: 'Standardized drug & vaccine library',
-    f3p3: '30-day immunization due alerts',
+    f3Badge: 'Creator Ecosystem',
+    f3Title1: 'Designer Onboarding &',
+    f3Title2: 'Revenue Sharing',
+    f3Desc: 'Support designer profiles, artwork submissions, licensing agreements, sales analytics, and revenue sharing for a scalable creative supply side.',
+    f3p1: 'Designer profile, portfolio, and audit flow',
+    f3p2: 'License type and revenue share rules',
+    f3p3: 'Settlement and withdrawal extension points',
 
-    f4Badge: 'Analytics',
-    f4Title1: 'Real-Time Data',
-    f4Title2: 'Visualization',
-    f4Desc: 'Monitor entry vs exit trends, pen utilization, and immunization coverage through interactive charts. The dashboard instantly shows your entry, stock, and exit balance at a glance.',
-    f4p1: 'Entry = Stock + Exit balance equation',
-    f4p2: '6-month trend charts with ECharts',
-    f4p3: 'Pen capacity utilization overview',
+    f4Badge: 'Operations',
+    f4Title1: 'Content Review',
+    f4Title2: 'Order Operations',
+    f4Desc: 'Operate artwork review, SKU listing, order handling, sales metrics, and financial settlement from a dedicated management workspace.',
+    f4p1: 'Artwork, SKU, and order KPI overview',
+    f4p2: 'Sales trends, hot IP, and stock alerts',
+    f4p3: 'Payment, shipping, and review extensions',
 
-    ctaTitle1: 'Ready to modernize',
-    ctaTitle2: 'your livestock operation?',
-    ctaSub: 'Join hundreds of farms already running on SmartFarm.',
+    ctaTitle1: 'Ready to launch',
+    ctaTitle2: 'your creative business?',
+    ctaSub: 'Build a more efficient digital management experience.',
     ctaPrimary: 'Create Free Account',
     ctaGhost: 'Log In',
 
-    footer1: '© 2026 SmartFarm Management Platform',
-    footer2: 'Digital Agriculture Solutions',
+    footer1: '© 2026 之间智造',
+    footer2: 'Creative Product Intelligence Platform',
 
     modalWelcomeLogin: 'Welcome back',
     modalWelcomeReg: 'Create your account',
@@ -87,61 +88,61 @@ const translations = {
     switchToLogin: "Already have an account?",
     switchToLoginLink: "Log in",
 
-    tlTitle: 'Traceability Report',
+    tlTitle: 'IP Sales Report',
     analyticsTitle: 'Monthly Overview',
     analyticsRange: 'Last 6 months',
   },
   zh: {
-    navBrand: 'SmartFarm',
+    navBrand: '之间智造',
     navLogin: '登 录',
     navSignup: '注 册',
-    heroEyebrow: '智慧畜牧养殖管理系统',
-    heroTitle1: '智慧养殖',
-    heroTitle2: '管理平台',
-    heroSub: '面向现代农业的全链路数字化解决方案 —\n从个体档案管理到全链路溯源追踪。',
+    heroEyebrow: 'AI 文创智造平台',
+    heroTitle1: '之间智造',
+    heroTitle2: '之间味道-文创产品智能体平台',
+    heroSub: '从一个创意概念出发，串联AI设计、智能评审、打样准备、量产管理与商品发售。',
     heroCta: '立即开始',
     scrollHint: '探索功能',
 
-    f1Badge: '个体档案',
-    f1Title1: '完整个体',
-    f1Title2: '全生命周期追踪',
-    f1Desc: '每头牲畜从入栏起即分配唯一耳标编号，追踪品种、圈舍位置、入栏日期、健康状态，以及调转、免疫和治疗的完整历史记录。',
-    f1p1: '系统自动分配唯一耳标编号',
-    f1p2: '实时存栏状态（在栏 / 已出栏）',
-    f1p3: '完整圈舍调转审计记录',
+    f1Badge: '图片IP库',
+    f1Title1: '高清图片IP',
+    f1Title2: '分类与标签管理',
+    f1Desc: '建立高清图片素材库，支持国风、治愈系、地域文化等分类，并通过标签、故事文案和授权状态沉淀可售数字资产。',
+    f1p1: '图片上传、分类、标签化管理',
+    f1p2: '作品故事、授权与审核状态管理',
+    f1p3: '一张IP关联多个文创商品SKU',
 
-    f2Badge: '全链路溯源',
-    f2Title1: '端到端',
-    f2Title2: '全链路溯源',
-    f2Desc: '通过耳标号或批次号查询任意个体或批次的完整生命历程。每一次入栏、免疫、调转、出栏事件均带时间戳永久记录。',
-    f2p1: '支持耳标号 / 批次号双向检索',
-    f2p2: '完整时间轴事件记录',
-    f2p3: '符合食品安全合规要求',
+    f2Badge: '商品售卖',
+    f2Title1: '从图片IP到',
+    f2Title2: '文创商品',
+    f2Desc: '同一张插画可衍生明信片、装饰画、手机壳、帆布袋等多个SKU，突出视觉展示、设计理念和商品实物化能力。',
+    f2p1: '支持多SKU、价格、库存和材质管理',
+    f2p2: '支持尺寸、材质、签名版等定制选项',
+    f2p3: '适配购物车、下单和订单状态追踪',
 
-    f3Badge: '健康管理',
-    f3Title1: '免疫接种与',
-    f3Title2: '用药记录',
-    f3Desc: '制定并记录每次免疫接种和治疗方案。操作员自动绑定当前登录账户，无需手动填写，杜绝人为错误，并自动提示逾期未接种个体。',
-    f3p1: '操作员自动绑定登录账户，不可篡改',
-    f3p2: '标准化药品 / 疫苗条目库',
-    f3p3: '30天免疫到期智能提醒',
+    f3Badge: '创作者生态',
+    f3Title1: '设计师入驻与',
+    f3Title2: '授权分成',
+    f3Desc: '支持设计师/创作者入驻、作品投稿、授权协议、销售数据查看与收益分成，为平台持续供给优质图片IP。',
+    f3p1: '设计师档案、作品集与审核流程',
+    f3p2: '授权类型与收益分成规则配置',
+    f3p3: '销售数据与结算提现能力预留',
 
-    f4Badge: '数据统计',
-    f4Title1: '实时数据',
-    f4Title2: '可视化分析',
-    f4Desc: '通过交互式图表监控入栏与出栏趋势、圈舍利用率和免疫覆盖情况。仪表盘一眼呈现入栏、存栏、出栏的平衡关系。',
-    f4p1: '入栏 = 存栏 + 出栏 平衡等式',
-    f4p2: '近6个月趋势折线 / 柱状图',
-    f4p3: '圈舍容量利用率总览',
+    f4Badge: '运营后台',
+    f4Title1: '内容审核',
+    f4Title2: '订单运营',
+    f4Desc: '面向运营人员提供作品审核、商品上下架、订单处理、销售统计与财务结算视图，保障文创交易闭环。',
+    f4p1: '图片IP、SKU、订单关键指标总览',
+    f4p2: '销售趋势、热门作品与库存预警',
+    f4p3: '支付、发货、评价流程可扩展',
 
-    ctaTitle1: '准备好升级',
-    ctaTitle2: '您的养殖管理了吗？',
-    ctaSub: '已有众多养殖场在使用 SmartFarm 高效运营。',
+    ctaTitle1: '准备好开启',
+    ctaTitle2: '您的文创生意了吗？',
+    ctaSub: '用数字化能力提升业务管理效率。',
     ctaPrimary: '免费创建账号',
     ctaGhost: '立即登录',
 
-    footer1: '© 2026 智慧养殖管理平台',
-    footer2: '数字农业解决方案',
+    footer1: '© 2026 之间智造',
+    footer2: '文创产品智能体平台',
 
     modalWelcomeLogin: '欢迎回来',
     modalWelcomeReg: '创建您的账号',
@@ -170,7 +171,7 @@ const translations = {
     switchToLogin: '已有账号？',
     switchToLoginLink: '立即登录',
 
-    tlTitle: '溯源报告',
+    tlTitle: 'IP销售报告',
     analyticsTitle: '月度概览',
     analyticsRange: '近6个月',
   },
@@ -306,10 +307,19 @@ onUnmounted(() => {
   <div class="landing">
 
     <!-- ══════════════════════════════════════
-         HERO — full-screen video section
+         HERO — premium animated pattern section
     ══════════════════════════════════════ -->
     <section class="hero">
-      <video class="hero-video" src="/login-bg.mp4" autoplay muted loop playsinline></video>
+      <div class="hero-stage" aria-hidden="true">
+        <div class="hero-mesh"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-lines"></div>
+        <div class="hero-orb hero-orb--a"></div>
+        <div class="hero-orb hero-orb--b"></div>
+        <div class="hero-orb hero-orb--c"></div>
+        <div class="hero-ring hero-ring--a"></div>
+        <div class="hero-ring hero-ring--b"></div>
+      </div>
       <div class="hero-overlay"></div>
       <div class="hero-vignette"></div>
 
@@ -317,12 +327,9 @@ onUnmounted(() => {
       <nav class="glass-nav">
         <div class="nav-brand">
           <div class="nav-logo-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
+            <img :src="andTasteLogo" alt="之间味道 logo" />
           </div>
-          <span class="nav-brand-name">SmartFarm</span>
+          <span class="nav-brand-name">之间智造</span>
         </div>
         <div class="nav-actions">
           <button class="nav-lang-toggle" @click="toggleLang">
@@ -345,6 +352,10 @@ onUnmounted(() => {
           {{ t.heroCta }}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
+        <div class="hero-flow" aria-label="文创产品智能体流程">
+          <span>概念</span><i></i><span>设计</span><i></i><span>打样</span><i></i><span>量产</span><i></i><span>发售</span>
+        </div>
+        <p class="hero-flow-caption">系统支持从创意概念到设计生成、AI评审、打样准备、量产协同与上架发售的完整链路。</p>
       </div>
 
       <!-- Scroll indicator -->
@@ -361,9 +372,12 @@ onUnmounted(() => {
     ══════════════════════════════════════ -->
     <div class="features-wrap">
 
-      <!-- Feature 1 — Individual Animal Records -->
-      <section class="feature-section feature-section--dark feature-section--video anim-section">
-        <video class="feat-video" src="/feature-1.mp4" autoplay muted loop playsinline></video>
+      <!-- Feature 1 — IP Asset Management -->
+      <section class="feature-section feature-section--dark feature-section--pattern anim-section">
+        <div class="feature-pattern feature-pattern--ip" aria-hidden="true">
+          <span class="pattern-orb pattern-orb--a"></span>
+          <span class="pattern-orb pattern-orb--b"></span>
+        </div>
         <div class="feat-overlay"></div>
         <div class="feature-content">
           <div class="feature-badge anim-child" style="--d:0s">{{ t.f1Badge }}</div>
@@ -376,81 +390,84 @@ onUnmounted(() => {
           </ul>
         </div>
         <div class="feature-visual">
-          <!-- Mock animal profile card -->
+          <!-- Mock IP profile card -->
           <div class="mock-card mock-profile">
             <div class="mock-card-header">
               <div class="mock-tag-icon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
               </div>
-              <span class="mock-ear-tag">ET20260610001</span>
-              <span class="mock-status-badge active">Active</span>
+              <span class="mock-ear-tag">IP20260710001</span>
+              <span class="mock-status-badge active">Published</span>
             </div>
             <div class="mock-divider"></div>
             <div class="mock-rows">
               <div class="mock-row">
-                <span class="mock-row-label">Breed</span>
-                <span class="mock-row-val">Duroc Pig</span>
+                <span class="mock-row-label">Style</span>
+                <span class="mock-row-val">国风插画</span>
               </div>
               <div class="mock-row">
-                <span class="mock-row-label">Current Pen</span>
-                <span class="mock-row-val">Pen A-01</span>
+                <span class="mock-row-label">Product Line</span>
+                <span class="mock-row-val">明信片 / 帆布袋</span>
               </div>
               <div class="mock-row">
-                <span class="mock-row-label">Entry Date</span>
-                <span class="mock-row-val">2026-01-15</span>
+                <span class="mock-row-label">License</span>
+                <span class="mock-row-val">商业授权</span>
               </div>
               <div class="mock-row">
                 <span class="mock-row-label">Batch</span>
-                <span class="mock-row-val">BATCH20260115</span>
+                <span class="mock-row-val">LAUNCH202607</span>
               </div>
             </div>
             <div class="mock-actions">
-              <div class="mock-action-btn">Health Records</div>
-              <div class="mock-action-btn">Transfer</div>
+              <div class="mock-action-btn">生成SKU</div>
+              <div class="mock-action-btn">查看授权</div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Feature 2 — Full Traceability (reversed) -->
-      <section class="feature-section feature-section--alt feature-section--dark feature-section--video anim-section">
-        <video class="feat-video" src="/feature-2.mp4" autoplay muted loop playsinline></video>
+      <!-- Feature 2 — Creative Commerce (reversed) -->
+      <section class="feature-section feature-section--alt feature-section--dark feature-section--pattern anim-section">
+        <div class="feature-pattern feature-pattern--commerce" aria-hidden="true">
+          <span class="pattern-orb pattern-orb--a"></span>
+          <span class="pattern-orb pattern-orb--b"></span>
+        </div>
         <div class="feat-overlay"></div>
         <div class="feature-visual">
           <!-- Mock timeline -->
           <div class="mock-card mock-timeline">
             <div class="mock-tl-title">{{ t.tlTitle }}</div>
-            <div class="mock-tl-tag">ET20260610001</div>
+            <div class="mock-tl-tag">IP20260710001</div>
             <div class="mock-timeline-list">
               <div class="mock-tl-item">
                 <div class="mock-tl-dot tl-green"></div>
                 <div class="mock-tl-line"></div>
                 <div class="mock-tl-content">
-                  <span class="mock-tl-event">Entry Recorded</span>
-                  <span class="mock-tl-meta">Jan 15, 2026 · Pen A-01</span>
+                  <span class="mock-tl-event">IP Approved</span>
+                  <span class="mock-tl-meta">Jul 10, 2026 · 版权通过</span>
                 </div>
               </div>
               <div class="mock-tl-item">
                 <div class="mock-tl-dot tl-blue"></div>
                 <div class="mock-tl-line"></div>
                 <div class="mock-tl-content">
-                  <span class="mock-tl-event">Vaccination</span>
-                  <span class="mock-tl-meta">Feb 01, 2026 · Swine Flu Vaccine</span>
+                  <span class="mock-tl-event">SKU Mockup</span>
+                  <span class="mock-tl-meta">Jul 12, 2026 · 手机壳 / 冰箱贴</span>
                 </div>
               </div>
               <div class="mock-tl-item">
                 <div class="mock-tl-dot tl-amber"></div>
                 <div class="mock-tl-line"></div>
                 <div class="mock-tl-content">
-                  <span class="mock-tl-event">Pen Transfer</span>
-                  <span class="mock-tl-meta">Mar 10, 2026 · Pen A-01 → B-02</span>
+                  <span class="mock-tl-event">Sample Ready</span>
+                  <span class="mock-tl-meta">Jul 18, 2026 · 打样质检</span>
                 </div>
               </div>
               <div class="mock-tl-item mock-tl-last">
                 <div class="mock-tl-dot tl-gray"></div>
                 <div class="mock-tl-content">
-                  <span class="mock-tl-event">Slaughter</span>
-                  <span class="mock-tl-meta">Apr 20, 2026</span>
+                  <span class="mock-tl-event">Online Sale</span>
+                  <span class="mock-tl-meta">Jul 25, 2026 · 上架发售</span>
                 </div>
               </div>
             </div>
@@ -468,9 +485,12 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <!-- Feature 3 — Health Management -->
-      <section class="feature-section feature-section--dark feature-section--dark-blue feature-section--video anim-section">
-        <video class="feat-video" src="/feature-3.mp4" autoplay muted loop playsinline></video>
+      <!-- Feature 3 — Creator Ecosystem -->
+      <section class="feature-section feature-section--dark feature-section--dark-blue feature-section--pattern anim-section">
+        <div class="feature-pattern feature-pattern--creator" aria-hidden="true">
+          <span class="pattern-orb pattern-orb--a"></span>
+          <span class="pattern-orb pattern-orb--b"></span>
+        </div>
         <div class="feat-overlay"></div>
         <div class="feature-content">
           <div class="feature-badge feature-badge--blue anim-child" style="--d:0s">{{ t.f3Badge }}</div>
@@ -483,16 +503,16 @@ onUnmounted(() => {
           </ul>
         </div>
         <div class="feature-visual">
-          <!-- Mock health records stack -->
+          <!-- Mock creator operations stack -->
           <div class="mock-health-stack">
             <div class="mock-health-card">
               <div class="mock-health-icon blue">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
               <div class="mock-health-info">
-                <span class="mock-health-type">Vaccination</span>
-                <span class="mock-health-meta">Mar 15, 2026 · admin</span>
-                <span class="mock-health-drug">Swine Influenza Vaccine</span>
+                <span class="mock-health-type">Creator Audit</span>
+                <span class="mock-health-meta">Jul 10, 2026 · admin</span>
+                <span class="mock-health-drug">设计师资质与作品集审核</span>
               </div>
               <span class="mock-health-status done">Done</span>
             </div>
@@ -501,9 +521,9 @@ onUnmounted(() => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.5 20H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H20a2 2 0 0 1 2 2v3"/><circle cx="18" cy="18" r="3"/><path d="m22 22-1.5-1.5"/></svg>
               </div>
               <div class="mock-health-info">
-                <span class="mock-health-type">Medication</span>
-                <span class="mock-health-meta">Mar 22, 2026 · admin</span>
-                <span class="mock-health-drug">Amoxicillin · 500mg</span>
+                <span class="mock-health-type">License Rule</span>
+                <span class="mock-health-meta">Jul 12, 2026 · legal</span>
+                <span class="mock-health-drug">商用授权 / 分成比例配置</span>
               </div>
               <span class="mock-health-status done">Done</span>
             </div>
@@ -512,9 +532,9 @@ onUnmounted(() => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
               <div class="mock-health-info">
-                <span class="mock-health-type">Vaccination Due</span>
-                <span class="mock-health-meta">Apr 01, 2026 · Scheduled</span>
-                <span class="mock-health-drug">Foot-and-Mouth Vaccine</span>
+                <span class="mock-health-type">Settlement Due</span>
+                <span class="mock-health-meta">Jul 31, 2026 · Scheduled</span>
+                <span class="mock-health-drug">月度销售收益结算</span>
               </div>
               <span class="mock-health-status pending">Due</span>
             </div>
@@ -522,9 +542,12 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <!-- Feature 4 — Analytics (reversed) -->
-      <section class="feature-section feature-section--alt feature-section--dark feature-section--dark-purple feature-section--video anim-section">
-        <video class="feat-video" src="/feature-4.mp4" autoplay muted loop playsinline></video>
+      <!-- Feature 4 — Operations Analytics (reversed) -->
+      <section class="feature-section feature-section--alt feature-section--dark feature-section--dark-purple feature-section--pattern anim-section">
+        <div class="feature-pattern feature-pattern--ops" aria-hidden="true">
+          <span class="pattern-orb pattern-orb--a"></span>
+          <span class="pattern-orb pattern-orb--b"></span>
+        </div>
         <div class="feat-overlay"></div>
         <div class="feature-visual">
           <!-- Mock analytics dashboard -->
@@ -631,9 +654,9 @@ onUnmounted(() => {
 
             <div class="modal-brand">
               <div class="modal-brand-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <img :src="andTasteLogo" alt="之间味道 logo" />
               </div>
-              <span>SmartFarm</span>
+              <span>之间智造</span>
             </div>
 
             <div class="modal-tabs">
@@ -725,27 +748,140 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #020617;
 }
 
-.hero-video {
+.hero-stage {
   position: absolute;
   inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transform: scale(1.04);
   z-index: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(45, 212, 191, 0.30) 0, transparent 28%),
+    radial-gradient(circle at 82% 28%, rgba(124, 58, 237, 0.26) 0, transparent 30%),
+    radial-gradient(circle at 58% 86%, rgba(245, 158, 11, 0.16) 0, transparent 32%),
+    linear-gradient(135deg, #020617 0%, #071426 48%, #111827 100%);
+}
+
+.hero-mesh {
+  position: absolute;
+  inset: -18%;
+  background:
+    conic-gradient(from 130deg at 52% 44%,
+      rgba(94,234,212,.18),
+      rgba(8,145,178,.04),
+      rgba(139,92,246,.20),
+      rgba(251,146,60,.08),
+      rgba(94,234,212,.18));
+  filter: blur(42px) saturate(150%);
+  opacity: .88;
+  animation: meshRotate 22s linear infinite;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+  background-size: 54px 54px;
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 0%, rgba(0,0,0,.86) 40%, transparent 78%);
+  mask-image: radial-gradient(circle at 50% 42%, #000 0%, rgba(0,0,0,.86) 40%, transparent 78%);
+  opacity: .55;
+  animation: gridDrift 18s linear infinite;
+}
+
+.hero-lines {
+  position: absolute;
+  inset: -20%;
+  background:
+    linear-gradient(112deg, transparent 0 38%, rgba(255,255,255,.10) 39%, transparent 40% 62%, rgba(94,234,212,.12) 63%, transparent 64%),
+    linear-gradient(68deg, transparent 0 52%, rgba(167,139,250,.10) 53%, transparent 54%);
+  opacity: .52;
+  transform: rotate(-4deg);
+  animation: lineSweep 12s ease-in-out infinite alternate;
+}
+
+.hero-orb,
+.hero-ring {
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.hero-orb {
+  filter: blur(14px);
+  mix-blend-mode: screen;
+  opacity: .68;
+  animation: orbFloat 9s ease-in-out infinite;
+}
+.hero-orb--a {
+  width: 220px; height: 220px;
+  left: 8%; top: 18%;
+  background: radial-gradient(circle, rgba(45,212,191,.55), transparent 68%);
+}
+.hero-orb--b {
+  width: 280px; height: 280px;
+  right: 8%; top: 16%;
+  background: radial-gradient(circle, rgba(124,58,237,.45), transparent 70%);
+  animation-delay: -2.4s;
+}
+.hero-orb--c {
+  width: 180px; height: 180px;
+  left: 56%; bottom: 10%;
+  background: radial-gradient(circle, rgba(251,146,60,.32), transparent 70%);
+  animation-delay: -4.8s;
+}
+
+.hero-ring {
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: inset 0 0 38px rgba(94,234,212,.08), 0 0 50px rgba(139,92,246,.10);
+  transform: rotate(18deg);
+  animation: ringPulse 7s ease-in-out infinite;
+}
+.hero-ring--a {
+  width: 520px; height: 220px;
+  right: -120px; bottom: 16%;
+}
+.hero-ring--b {
+  width: 360px; height: 150px;
+  left: -90px; top: 34%;
+  animation-delay: -2s;
 }
 
 .hero-overlay {
   position: absolute; inset: 0; z-index: 1;
-  background: rgba(2, 8, 20, 0.60);
+  background:
+    linear-gradient(180deg, rgba(2,6,23,.44), rgba(2,6,23,.68)),
+    radial-gradient(ellipse at 50% 44%, rgba(15,23,42,.16), rgba(2,6,23,.66) 76%);
 }
 
 .hero-vignette {
   position: absolute; inset: 0; z-index: 1;
-  background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.65) 100%);
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,0.72) 100%);
   pointer-events: none;
+}
+
+@keyframes meshRotate {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.08); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+@keyframes gridDrift {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 54px 54px, 54px 54px; }
+}
+@keyframes lineSweep {
+  from { transform: translateX(-3%) rotate(-4deg); opacity: .34; }
+  to { transform: translateX(3%) rotate(-4deg); opacity: .62; }
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(22px,-28px,0) scale(1.08); }
+}
+@keyframes ringPulse {
+  0%, 100% { opacity: .24; transform: rotate(18deg) scale(1); }
+  50% { opacity: .52; transform: rotate(18deg) scale(1.04); }
 }
 
 /* Glass nav */
@@ -768,10 +904,16 @@ onUnmounted(() => {
 
 .nav-logo-icon {
   width: 34px; height: 34px; border-radius: 9px;
-  background: var(--c-primary);
+  background: #fff;
   display: flex; align-items: center; justify-content: center;
-  color: #fff;
-  box-shadow: 0 0 16px rgba(13,148,136,0.55);
+  overflow: hidden;
+  box-shadow: 0 0 16px rgba(255,255,255,0.28);
+}
+
+.nav-logo-icon img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .nav-brand-name {
@@ -871,6 +1013,42 @@ onUnmounted(() => {
 .hero-cta:active { transform: translateY(0); }
 
 /* Scroll hint */
+
+.hero-title-accent {
+  font-size: clamp(28px, 4.2vw, 58px);
+  line-height: 1.12;
+}
+
+.hero-flow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+.hero-flow i {
+  width: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,.2), rgba(255,255,255,.8));
+}
+.hero-flow-caption {
+  max-width: 620px;
+  margin: 12px 0 0;
+  color: rgba(255,255,255,.72);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 .scroll-hint {
   position: relative; z-index: 10;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -911,21 +1089,123 @@ onUnmounted(() => {
   flex-direction: row-reverse;
 }
 
-/* ── Video background ── */
-.feat-video {
+/* ── Premium CSS pattern background ── */
+.feature-section--pattern {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(45,212,191,.18), transparent 34%),
+    radial-gradient(circle at 82% 75%, rgba(124,58,237,.15), transparent 38%),
+    linear-gradient(135deg, #06111f 0%, #09182c 54%, #06101d 100%);
+}
+
+.feature-pattern {
   position: absolute;
   inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  object-position: center;
   z-index: 0;
-  transform: scale(1.04);
+  overflow: hidden;
+  pointer-events: none;
 }
+.feature-pattern::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  background:
+    conic-gradient(from 210deg at 50% 50%,
+      rgba(20,184,166,.18),
+      rgba(59,130,246,.06),
+      rgba(139,92,246,.18),
+      rgba(245,158,11,.07),
+      rgba(20,184,166,.18));
+  filter: blur(34px);
+  opacity: .7;
+  animation: sectionMesh 24s linear infinite;
+}
+.feature-pattern::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,.08) 1px, transparent 1.6px);
+  background-size: 46px 46px, 46px 46px, 24px 24px;
+  -webkit-mask-image: radial-gradient(circle at 52% 50%, #000 0 52%, transparent 82%);
+  mask-image: radial-gradient(circle at 52% 50%, #000 0 52%, transparent 82%);
+  opacity: .58;
+  animation: patternDrift 20s linear infinite;
+}
+
+.pattern-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(12px);
+  mix-blend-mode: screen;
+  opacity: .5;
+  animation: patternOrb 8s ease-in-out infinite;
+}
+.pattern-orb--a {
+  width: 210px;
+  height: 210px;
+  left: 8%;
+  bottom: 10%;
+  background: radial-gradient(circle, rgba(45,212,191,.38), transparent 68%);
+}
+.pattern-orb--b {
+  width: 240px;
+  height: 240px;
+  right: 10%;
+  top: 8%;
+  background: radial-gradient(circle, rgba(167,139,250,.35), transparent 70%);
+  animation-delay: -3s;
+}
+
+.feature-pattern--commerce::before {
+  background:
+    conic-gradient(from 40deg at 52% 48%,
+      rgba(14,165,233,.17),
+      rgba(45,212,191,.16),
+      rgba(251,146,60,.10),
+      rgba(14,165,233,.17));
+}
+.feature-pattern--creator::before {
+  opacity: .56;
+  background:
+    conic-gradient(from 90deg at 50% 50%,
+      rgba(59,130,246,.22),
+      rgba(20,184,166,.10),
+      rgba(99,102,241,.18),
+      rgba(59,130,246,.22));
+}
+.feature-pattern--ops::before {
+  opacity: .58;
+  background:
+    conic-gradient(from 155deg at 50% 50%,
+      rgba(168,85,247,.20),
+      rgba(59,130,246,.08),
+      rgba(236,72,153,.14),
+      rgba(168,85,247,.20));
+}
+
 .feat-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(4, 10, 22, 0.72);
+  background:
+    linear-gradient(90deg, rgba(2,6,23,.74), rgba(2,6,23,.45) 48%, rgba(2,6,23,.74)),
+    radial-gradient(ellipse at center, rgba(15,23,42,.05), rgba(2,6,23,.55));
   z-index: 1;
+}
+
+@keyframes sectionMesh {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.06); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+@keyframes patternDrift {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 46px 46px, 46px 46px, 24px 24px; }
+}
+@keyframes patternOrb {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(18px,-18px,0) scale(1.08); }
 }
 
 /* ── Dark CSS gradient sections (3 & 4) ── */
@@ -1411,8 +1691,16 @@ onUnmounted(() => {
 }
 .modal-brand-icon {
   width: 28px; height: 28px; border-radius: 7px;
-  background: #0d9488; color: #fff;
+  background: #fff;
   display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.modal-brand-icon img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .modal-tabs {
@@ -1504,6 +1792,265 @@ onUnmounted(() => {
 
 .modal-slide-enter-active { transition: opacity .25s ease, transform .25s cubic-bezier(0.16,1,0.3,1); }
 .modal-slide-enter-from   { opacity: 0; transform: translateY(20px) scale(0.97); }
+
+/* ══════════════════════════════════════
+   Bright premium theme overrides
+══════════════════════════════════════ */
+.landing {
+  background: #f7fbff;
+}
+
+.hero {
+  background: #f8fbff;
+}
+
+.hero-stage {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(45, 212, 191, 0.26) 0, transparent 30%),
+    radial-gradient(circle at 82% 24%, rgba(167, 139, 250, 0.24) 0, transparent 32%),
+    radial-gradient(circle at 62% 88%, rgba(251, 191, 36, 0.20) 0, transparent 34%),
+    linear-gradient(135deg, #fbfdff 0%, #eef8ff 44%, #fff9f0 100%);
+}
+.hero-mesh {
+  background:
+    conic-gradient(from 130deg at 52% 44%,
+      rgba(20,184,166,.22),
+      rgba(56,189,248,.10),
+      rgba(167,139,250,.24),
+      rgba(251,191,36,.12),
+      rgba(20,184,166,.22));
+  filter: blur(48px) saturate(135%);
+  opacity: .72;
+}
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(15,23,42,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,.055) 1px, transparent 1px);
+  opacity: .56;
+}
+.hero-lines {
+  background:
+    linear-gradient(112deg, transparent 0 38%, rgba(13,148,136,.10) 39%, transparent 40% 62%, rgba(124,58,237,.10) 63%, transparent 64%),
+    linear-gradient(68deg, transparent 0 52%, rgba(245,158,11,.10) 53%, transparent 54%);
+  opacity: .52;
+}
+.hero-orb {
+  mix-blend-mode: multiply;
+  opacity: .48;
+}
+.hero-orb--a { background: radial-gradient(circle, rgba(45,212,191,.40), transparent 68%); }
+.hero-orb--b { background: radial-gradient(circle, rgba(167,139,250,.34), transparent 70%); }
+.hero-orb--c { background: radial-gradient(circle, rgba(251,191,36,.30), transparent 70%); }
+.hero-ring {
+  border-color: rgba(15,23,42,.10);
+  box-shadow: inset 0 0 38px rgba(13,148,136,.08), 0 0 50px rgba(124,58,237,.12);
+}
+.hero-overlay {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,.66)),
+    radial-gradient(ellipse at 50% 42%, rgba(255,255,255,.12), rgba(239,248,255,.70) 78%);
+}
+.hero-vignette {
+  background: radial-gradient(ellipse at center, transparent 46%, rgba(203,213,225,.42) 100%);
+}
+
+.glass-nav {
+  background: rgba(255,255,255,0.68);
+  border-color: rgba(15,23,42,0.08);
+  box-shadow: 0 18px 60px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,.78);
+}
+.nav-brand-name {
+  color: #0f172a;
+}
+.nav-lang-toggle {
+  color: #475569;
+  border-color: rgba(15,23,42,0.12);
+}
+.nav-lang-toggle:hover {
+  background: rgba(15,23,42,0.05);
+  color: #0f172a;
+  border-color: rgba(13,148,136,0.28);
+}
+.nav-btn-login {
+  color: #0f172a;
+  background: rgba(255,255,255,0.72);
+  border-color: rgba(15,23,42,0.10);
+}
+.nav-btn-login:hover {
+  background: #fff;
+  border-color: rgba(13,148,136,0.26);
+}
+.nav-btn-signup {
+  box-shadow: 0 10px 28px rgba(13,148,136,0.24);
+}
+
+.hero-eyebrow {
+  color: #0d9488;
+}
+.hero-title {
+  color: #0f172a;
+  text-shadow: 0 16px 60px rgba(15,23,42,.10);
+}
+.hero-title-accent {
+  background: linear-gradient(135deg, #0d9488, #0891b2 48%, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  color: #475569;
+}
+.hero-flow {
+  background: rgba(255,255,255,0.76);
+  border-color: rgba(15,23,42,0.08);
+  color: #0f172a;
+  box-shadow: 0 16px 45px rgba(15,23,42,.08);
+}
+.hero-flow i {
+  background: linear-gradient(90deg, rgba(13,148,136,.14), rgba(13,148,136,.70));
+}
+.hero-flow-caption {
+  color: #475569;
+}
+.scroll-hint {
+  color: #64748b;
+}
+
+.features-wrap {
+  background:
+    linear-gradient(180deg, #f7fbff 0%, #f3f8fc 48%, #f8fafc 100%);
+}
+.feature-section {
+  border: 1px solid rgba(15,23,42,.07);
+  box-shadow: 0 24px 80px rgba(15,23,42,.08);
+}
+.feature-section--pattern,
+.feature-section--dark-blue,
+.feature-section--dark-purple {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(45,212,191,.20), transparent 34%),
+    radial-gradient(circle at 84% 72%, rgba(167,139,250,.18), transparent 38%),
+    linear-gradient(135deg, #ffffff 0%, #eef8ff 52%, #fff7ec 100%);
+}
+.feature-pattern::before,
+.feature-section--dark-blue::before,
+.feature-section--dark-purple::before {
+  background:
+    conic-gradient(from 210deg at 50% 50%,
+      rgba(20,184,166,.18),
+      rgba(59,130,246,.10),
+      rgba(167,139,250,.18),
+      rgba(251,191,36,.11),
+      rgba(20,184,166,.18));
+  opacity: .58;
+}
+.feature-pattern::after,
+.feature-section--dark-blue::after,
+.feature-section--dark-purple::after {
+  background-image:
+    linear-gradient(rgba(15,23,42,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,.045) 1px, transparent 1px),
+    radial-gradient(circle, rgba(13,148,136,.12) 1px, transparent 1.6px);
+  opacity: .48;
+}
+.pattern-orb {
+  mix-blend-mode: multiply;
+  opacity: .38;
+}
+.pattern-orb--a { background: radial-gradient(circle, rgba(45,212,191,.36), transparent 68%); }
+.pattern-orb--b { background: radial-gradient(circle, rgba(167,139,250,.30), transparent 70%); }
+.feat-overlay {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.62), rgba(255,255,255,.34) 48%, rgba(255,255,255,.62)),
+    radial-gradient(ellipse at center, rgba(255,255,255,.06), rgba(248,250,252,.44));
+}
+
+.feature-section--dark .feature-title  { color: #0f172a; }
+.feature-section--dark .feature-desc   { color: #475569; }
+.feature-section--dark .feature-points li { color: #334155; }
+.feature-section--dark .feature-points li svg { color: #0d9488; }
+.feature-section--dark .feature-badge {
+  background: rgba(13,148,136,.10);
+  color: #0f766e;
+  border-color: rgba(13,148,136,.20);
+}
+.feature-section--dark .feature-badge--teal {
+  background: rgba(20,184,166,.11);
+  color: #0f766e;
+  border-color: rgba(20,184,166,.20);
+}
+.feature-section--dark .feature-badge--blue {
+  background: rgba(59,130,246,.10);
+  color: #1d4ed8;
+  border-color: rgba(59,130,246,.18);
+}
+.feature-section--dark .feature-badge--purple {
+  background: rgba(124,58,237,.10);
+  color: #6d28d9;
+  border-color: rgba(124,58,237,.18);
+}
+
+.feature-section--dark .mock-card,
+.feature-section--dark .mock-health-card {
+  background: rgba(255,255,255,.76);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(15,23,42,.08);
+  box-shadow: 0 18px 60px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.72);
+}
+.feature-section--dark .mock-ear-tag,
+.feature-section--dark .mock-row-val,
+.feature-section--dark .mock-tl-event,
+.feature-section--dark .mock-health-type,
+.feature-section--dark .mock-analytics-title {
+  color: #0f172a;
+}
+.feature-section--dark .mock-row-label,
+.feature-section--dark .mock-tl-title,
+.feature-section--dark .mock-tl-meta,
+.feature-section--dark .mock-health-meta,
+.feature-section--dark .mock-analytics-range,
+.feature-section--dark .mock-stat-lbl {
+  color: #64748b;
+}
+.feature-section--dark .mock-tl-tag {
+  color: #0d9488;
+}
+.feature-section--dark .mock-health-drug,
+.feature-section--dark .mock-chart-legend {
+  color: #475569;
+}
+.feature-section--dark .mock-divider,
+.feature-section--dark .mock-tl-line,
+.feature-section--dark .mock-stat-row {
+  background: rgba(15,23,42,.08);
+  border-color: rgba(15,23,42,.08);
+}
+.feature-section--dark .mock-action-btn {
+  background: rgba(255,255,255,.62);
+  border-color: rgba(15,23,42,.09);
+  color: #475569;
+}
+.feature-section--dark .mock-tag-icon {
+  background: rgba(13,148,136,.12);
+  color: #0d9488;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-mesh,
+  .hero-grid,
+  .hero-lines,
+  .hero-orb,
+  .hero-ring,
+  .feature-pattern::before,
+  .feature-pattern::after,
+  .pattern-orb,
+  .scroll-chevron,
+  .floatable .mock-card,
+  .floatable .mock-health-stack {
+    animation: none !important;
+  }
+}
 
 /* ── Responsive ── */
 @media (max-width: 768px) {

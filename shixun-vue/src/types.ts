@@ -1,7 +1,8 @@
 export type Role = 'admin' | 'technician' | 'feeder'
 export type AlertType = 'success' | 'error'
 export type PageName =
-  | 'dashboard' | 'statistics' | 'pens' | 'drugs' | 'batches'
+  | 'dashboard' | 'studio' | 'marketing' | 'businessAi' | 'commercialMvp' | 'scaleUp' | 'production' | 'marketplace' | 'orders' | 'logistics' | 'warehouse' | 'designers'
+  | 'statistics' | 'pens' | 'drugs' | 'batches'
   | 'animals' | 'immunization' | 'medication' | 'transfer'
   | 'slaughter' | 'death' | 'traceability' | 'users' | 'products'
 

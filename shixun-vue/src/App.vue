@@ -3,36 +3,36 @@ import { ref, onMounted, watchEffect } from 'vue'
 import type { User, PageName, AlertType, Role } from './types'
 import LoginPage from './components/LoginPage.vue'
 import Sidebar from './components/Sidebar.vue'
-import Dashboard from './components/Dashboard.vue'
+import CreativeDashboard from './components/CreativeDashboard.vue'
+import CreativeStudio from './components/CreativeStudio.vue'
+import MarketingAssistant from './components/MarketingAssistant.vue'
+import BusinessAssistant from './components/BusinessAssistant.vue'
+import CommercialMvp from './components/CommercialMvp.vue'
+import ScaleUpPlatform from './components/ScaleUpPlatform.vue'
+import ProductionManagement from './components/ProductionManagement.vue'
+import ArtworkMarketplace from './components/ArtworkMarketplace.vue'
+import CreativeOrderCenter from './components/CreativeOrderCenter.vue'
+import LogisticsTracking from './components/LogisticsTracking.vue'
+import WarehouseManagement from './components/WarehouseManagement.vue'
+import DesignerCenter from './components/DesignerCenter.vue'
 import UserManagement from './components/UserManagement.vue'
-import PenManagement from './components/PenManagement.vue'
-import DrugVaccineManagement from './components/DrugVaccineManagement.vue'
-import BatchManagement from './components/BatchManagement.vue'
-import AnimalManagement from './components/AnimalManagement.vue'
-import ImmunizationManagement from './components/ImmunizationManagement.vue'
-import MedicationManagement from './components/MedicationManagement.vue'
-import PenTransferManagement from './components/PenTransferManagement.vue'
-import SlaughterManagement from './components/SlaughterManagement.vue'
-import DeathManagement from './components/DeathManagement.vue'
-import TraceabilityView from './components/TraceabilityView.vue'
-import StatisticsView from './components/StatisticsView.vue'
 import NotificationPanel from './components/NotificationPanel.vue'
 import GlobalAlert from './components/GlobalAlert.vue'
 import AiChat from './components/AiChat.vue'
 
 const PAGE_ROLES: Record<string, Role[]> = {
-  dashboard:    ['admin', 'technician'],
-  statistics:   ['admin', 'technician'],
-  pens:         ['admin', 'feeder'],
-  drugs:        ['admin', 'technician'],
-  batches:      ['admin', 'feeder'],
-  animals:      ['admin', 'technician', 'feeder'],
-  immunization: ['admin', 'technician', 'feeder'],
-  medication:   ['admin', 'technician', 'feeder'],
-  transfer:     ['admin', 'technician', 'feeder'],
-  slaughter:    ['admin', 'feeder'],
-  death:        ['admin', 'technician', 'feeder'],
-  traceability: ['admin', 'technician'],
+  dashboard:    ['admin', 'technician', 'feeder'],
+  studio:       ['admin', 'technician'],
+  marketing:    ['admin', 'technician'],
+  businessAi:   ['admin', 'technician'],
+  commercialMvp:['admin', 'technician'],
+  scaleUp:      ['admin', 'technician'],
+  production:   ['admin', 'technician'],
+  marketplace:  ['admin', 'technician', 'feeder'],
+  orders:       ['admin', 'technician', 'feeder'],
+  logistics:    ['admin', 'technician'],
+  warehouse:    ['admin', 'technician'],
+  designers:    ['admin', 'technician'],
   users:        ['admin'],
 }
 
@@ -41,7 +41,7 @@ function hasAccess(page: string, role?: Role): boolean {
 }
 
 function firstAllowedPage(role: Role): PageName {
-  return (Object.keys(PAGE_ROLES).find(p => hasAccess(p, role)) || 'animals') as PageName
+  return (Object.keys(PAGE_ROLES).find(p => hasAccess(p, role)) || 'marketplace') as PageName
 }
 
 const currentUser = ref<User | null>(null)
@@ -60,9 +60,7 @@ onMounted(() => {
 watchEffect(() => {
   if (!currentUser.value) return
   const role = currentUser.value.role || 'admin'
-  if (!hasAccess(currentPage.value, role)) {
-    currentPage.value = firstAllowedPage(role)
-  }
+  if (!hasAccess(currentPage.value, role)) currentPage.value = firstAllowedPage(role)
 })
 
 function showAlert(msg: string, type: AlertType = 'success'): void {
@@ -85,19 +83,19 @@ function onLogout(): void {
 }
 
 const pageLabels: Record<string, string> = {
-  dashboard:    '概览仪表盘',
-  statistics:   '数据统计分析',
-  pens:         '圈舍管理',
-  drugs:        '兽药疫苗库',
-  batches:      '养殖批次',
-  animals:      '个体档案',
-  immunization: '免疫记录',
-  medication:   '用药记录',
-  transfer:     '转舍管理',
-  slaughter:    '出栏管理',
-  death:        '死亡管理',
-  traceability: '全链路溯源',
-  users:        '用户管理',
+  dashboard:    '经营看板',
+  studio:       'AI设计工坊',
+  marketing:    '营销文案',
+  businessAi:   '报价/物流助手',
+  commercialMvp:'询盘到报价',
+  scaleUp:      '项目制开发',
+  production:   'BOM/打样生产',
+  marketplace:  'IP商城',
+  orders:       '订单履约',
+  logistics:    '物流跟踪',
+  warehouse:    '智能仓储',
+  designers:    '设计师/创作者',
+  users:        '账号权限',
 }
 </script>
 
@@ -128,11 +126,10 @@ const pageLabels: Record<string, string> = {
             </svg>
           </button>
           <nav class="breadcrumb">
-            <span class="bc-root">智慧养殖平台</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
             <span class="bc-current">{{ pageLabels[currentPage] }}</span>
           </nav>
         </div>
+        <div class="header-center-title">之间味道-文创产品智能体平台</div>
         <div class="header-right">
           <NotificationPanel />
           <div class="user-chip">
@@ -148,19 +145,19 @@ const pageLabels: Record<string, string> = {
 
       <!-- Main content -->
       <main class="app-main">
-        <Dashboard          v-if="currentPage === 'dashboard'"    @switch-page="p => { if (hasAccess(p, currentUser?.role)) currentPage = p }" @alert="showAlert" />
-        <StatisticsView     v-if="currentPage === 'statistics'"   @alert="showAlert" />
-        <PenManagement          v-if="currentPage === 'pens'"          @alert="showAlert" />
-        <DrugVaccineManagement  v-if="currentPage === 'drugs'"         @alert="showAlert" />
-        <BatchManagement        v-if="currentPage === 'batches'"       @alert="showAlert" />
-        <AnimalManagement       v-if="currentPage === 'animals'"       @alert="showAlert" />
-        <ImmunizationManagement v-if="currentPage === 'immunization'"  :current-user="currentUser" @alert="showAlert" />
-        <MedicationManagement   v-if="currentPage === 'medication'"    :current-user="currentUser" @alert="showAlert" />
-        <PenTransferManagement  v-if="currentPage === 'transfer'"      @alert="showAlert" />
-        <SlaughterManagement    v-if="currentPage === 'slaughter'"     @alert="showAlert" />
-        <DeathManagement        v-if="currentPage === 'death'"         :current-user="currentUser" @alert="showAlert" />
-        <TraceabilityView       v-if="currentPage === 'traceability'"  @alert="showAlert" />
-        <UserManagement         v-if="currentPage === 'users'"         @alert="showAlert" />
+        <CreativeDashboard    v-if="currentPage === 'dashboard'"   @switch-page="p => { if (hasAccess(p, currentUser?.role)) currentPage = p as PageName }" @alert="showAlert" />
+        <CreativeStudio       v-if="currentPage === 'studio'"      @alert="showAlert" />
+        <MarketingAssistant   v-if="currentPage === 'marketing'"   @alert="showAlert" />
+        <BusinessAssistant    v-if="currentPage === 'businessAi'"  @alert="showAlert" />
+        <CommercialMvp       v-if="currentPage === 'commercialMvp'" @alert="showAlert" />
+        <ScaleUpPlatform     v-if="currentPage === 'scaleUp'" @alert="showAlert" />
+        <ProductionManagement v-if="currentPage === 'production'"  @alert="showAlert" />
+        <ArtworkMarketplace   v-if="currentPage === 'marketplace'" @alert="showAlert" />
+        <CreativeOrderCenter  v-if="currentPage === 'orders'"      @alert="showAlert" />
+        <LogisticsTracking    v-if="currentPage === 'logistics'"  @alert="showAlert" />
+        <WarehouseManagement v-if="currentPage === 'warehouse'"  @alert="showAlert" />
+        <DesignerCenter       v-if="currentPage === 'designers'"   @alert="showAlert" />
+        <UserManagement       v-if="currentPage === 'users'"       @alert="showAlert" />
       </main>
     </div>
   </div>
@@ -236,6 +233,21 @@ const pageLabels: Record<string, string> = {
 .bc-root  { color: var(--c-text-3); }
 .bc-root svg { color: var(--c-text-3); }
 .bc-current { color: var(--c-text); font-weight: 500; }
+
+
+.header-center-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(520px, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
 
 .header-right {
   display: flex;
