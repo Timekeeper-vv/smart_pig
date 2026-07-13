@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed,nextTick,onBeforeUnmount,onMounted,reactive,ref } from 'vue'
+const props=withDefaults(defineProps<{initialView?:'image2d'|'model3d'|'review'}>(),{initialView:'image2d'})
 const emit=defineEmits<{alert:[msg:string,type?:'success'|'error']}>()
-const active=ref<'image2d'|'model3d'|'review'>('image2d'),styles=ref<any[]>([]),assets=ref<any[]>([]),jobs=ref<any[]>([]),reviews=ref<any[]>([]),busy=ref(false)
+const active=ref<'image2d'|'model3d'|'review'>(props.initialView),styles=ref<any[]>([]),assets=ref<any[]>([]),jobs=ref<any[]>([]),reviews=ref<any[]>([]),busy=ref(false)
 const imageResult=ref<any>(null),imagePreviewUrl=ref(''),uploadPreviewUrl=ref(''),uploadLoadError=ref(''),imageLoadError=ref(''),resultAnchor=ref<HTMLElement|null>(null),aiStage=ref(''),elapsed=ref(0),stageTimer=ref<any>(null),modelResult=ref<any>(null),reviewResult=ref<any>(null),generatedPrompt=ref(''),uploadPreview=ref('')
 const form2d=reactive({title:'山城街巷亚克力钥匙扣',styleId:1,productType:'亚克力钥匙扣',scene:'景区伴手礼、城市礼物',concept:'山城坡道、路灯、老店招牌和街巷烟火气',material:'3mm透明亚克力，双面彩印，金属钥匙扣',audience:'年轻游客、城市礼物购买者',visualStyle:'温暖治愈、东方城市插画、干净高级',imageSize:'1024x1024',negativePrompt:'不要低清晰度、错字、侵权IP、杂乱背景'})
 const form3d=reactive({prompt:'山城街巷主题亚克力钥匙扣，异形轮廓，正面浮雕层次，适合打样和量产',inputAssetId:null as number|null,exportFormats:'OBJ,STL,GLB'})
@@ -48,7 +49,7 @@ async function generate3d(){busy.value=true;try{const r=await fetch('/api/creati
 async function selectReviewImage(e:Event){const f=(e.target as HTMLInputElement).files?.[0];if(!f)return;busy.value=true;try{const d=await upload(f,reviewForm.title||'智能评估图片');reviewForm.assetId=d.assetId;uploadPreview.value=d.url;await prepareUploadPreview(d.assetId);emit('alert','评估图片已上传并显示','success')}catch(x:any){emit('alert','图片上传失败：'+x.message,'error')}finally{busy.value=false}}
 async function evaluate(){if(!reviewForm.assetId){emit('alert','请先上传需要评估的产品图、设计稿或参考图','error');return}if(!reviewForm.copy.trim()){emit('alert','请填写产品创意文案或方案说明','error');return}busy.value=true;reviewResult.value=null;try{const context=`产品类型：${reviewForm.productType}\n创意文案：${reviewForm.copy}\n目标人群：${reviewForm.targetAudience}\n预期价格：${reviewForm.priceRange}\n材质工艺：${reviewForm.material}\n销售场景：${reviewForm.salesScene}\n生产要求：${reviewForm.productionRequirement}\n请重点评估视觉创意、市场需求、成本量产、知识产权、销售转化及改进方案。`;const r=await fetch('/api/creative/ai/reviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assetId:reviewForm.assetId,context})});if(!r.ok)throw new Error(await r.text());reviewResult.value=await r.json();emit('alert','智能可行性评估完成','success');await load()}catch(e:any){emit('alert','评估失败：'+e.message,'error')}finally{busy.value=false}}
 function scoreClass(n:any){return Number(n)>=85?'good':Number(n)>=70?'warn':'bad'}
-onMounted(load);onBeforeUnmount(()=>{clearInterval(stageTimer.value);if(imagePreviewUrl.value.startsWith('blob:'))URL.revokeObjectURL(imagePreviewUrl.value);if(uploadPreviewUrl.value.startsWith('blob:'))URL.revokeObjectURL(uploadPreviewUrl.value)})
+onMounted(()=>{active.value=props.initialView;load()});onBeforeUnmount(()=>{clearInterval(stageTimer.value);if(imagePreviewUrl.value.startsWith('blob:'))URL.revokeObjectURL(imagePreviewUrl.value);if(uploadPreviewUrl.value.startsWith('blob:'))URL.revokeObjectURL(uploadPreviewUrl.value)})
 </script>
 <template><div class="page creative-page">
 <header class="hero"><div><p>CREATIVE DESIGN WORKSPACE</p><h2>创意设计</h2><span>从2D视觉创意、3D建模方案到产品可行性评估，形成可进入项目开发的创意资产。</span></div><button class="btn btn-secondary" @click="load">刷新</button></header>

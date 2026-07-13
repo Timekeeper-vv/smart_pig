@@ -18,6 +18,9 @@ import AiChat from './components/AiChat.vue'
 const PAGE_ROLES: Record<string, Role[]> = {
   dashboard:    ['admin', 'technician', 'feeder'],
   studio:       ['admin', 'technician'],
+  creative2d:   ['admin', 'technician'],
+  creative3d:   ['admin', 'technician'],
+  creativeReview:['admin', 'technician'],
   scaleUp:      ['admin', 'technician'],
   production:   ['admin', 'technician'],
   sampleProduction:['admin', 'technician'],
@@ -78,6 +81,9 @@ function onLogout(): void {
 const pageLabels: Record<string, string> = {
   dashboard:    '经营看板',
   studio:       '创意设计',
+  creative2d:   '2D创意生图',
+  creative3d:   '3D辅助建模',
+  creativeReview:'智能评估',
   scaleUp:      '生产管理',
   production:   '智能成本核算引擎',
   sampleProduction:'产品打样管理',
@@ -137,7 +143,10 @@ const pageLabels: Record<string, string> = {
       <!-- Main content -->
       <main class="app-main">
         <CreativeDashboard    v-if="currentPage === 'dashboard'"   @switch-page="p => { if (hasAccess(p, currentUser?.role)) currentPage = p as PageName }" @alert="showAlert" />
-        <CreativeStudio       v-if="currentPage === 'studio'"      @alert="showAlert" />
+        <CreativeStudio v-if="currentPage === 'studio'" initial-view="image2d" @alert="showAlert" />
+        <CreativeStudio v-if="currentPage === 'creative2d'" initial-view="image2d" @alert="showAlert" />
+        <CreativeStudio v-if="currentPage === 'creative3d'" initial-view="model3d" @alert="showAlert" />
+        <CreativeStudio v-if="currentPage === 'creativeReview'" initial-view="review" @alert="showAlert" />
         <ScaleUpPlatform     v-if="currentPage === 'scaleUp'" @alert="showAlert" />
         <ProductionManagement v-if="currentPage === 'production'" initial-view="cost" @alert="showAlert" />
         <ProductionManagement v-if="currentPage === 'sampleProduction'" initial-view="sample" @alert="showAlert" />
