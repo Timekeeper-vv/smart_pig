@@ -65,6 +65,7 @@ public class CreativeAiController {
     public CreativeAiController(JdbcTemplate jdbc, ObjectMapper mapper) {
         this.jdbc = jdbc;
         this.mapper = mapper;
+        this.jdbc.execute("CREATE TABLE IF NOT EXISTS design_review_report (id BIGINT AUTO_INCREMENT PRIMARY KEY, review_id BIGINT NOT NULL UNIQUE, report_json JSON NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) COMMENT='智能评估完整报告留存'");
     }
 
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
@@ -554,7 +555,9 @@ public class CreativeAiController {
         String recommendation = avg.intValue() >= 85 ? "go" : avg.intValue() >= 70 ? "adjust" : "reject";
         String summary = buildReviewSummary(avg, recommendation, results);
         jdbc.update("UPDATE design_review SET overall_score=?, summary=?, recommendation=? WHERE id=?", avg, summary, recommendation, reviewId);
-        return Map.of("reviewId", reviewId, "reviewNo", reviewNo, "asset", asset, "overallScore", avg, "recommendation", recommendation, "summary", summary, "agents", results);
+        Map<String,Object> fullReport = new LinkedHashMap<>(Map.of("reviewId", reviewId, "reviewNo", reviewNo, "asset", asset, "overallScore", avg, "recommendation", recommendation, "summary", summary, "agents", results, "matrix", buildReviewMatrix(results), "roadmap", buildUpgradeRoadmap(avg, recommendation, results)));
+        jdbc.update("INSERT INTO design_review_report (review_id, report_json) VALUES (?, CAST(? AS JSON)) ON DUPLICATE KEY UPDATE report_json=VALUES(report_json)", reviewId, mapper.writeValueAsString(fullReport));
+        return fullReport;
     }
 
     @Scheduled(fixedDelayString = "${tripo.poll.delay-ms:5000}", initialDelayString = "${tripo.poll.initial-delay-ms:8000}")
@@ -577,6 +580,15 @@ public class CreativeAiController {
         else list = jdbc.queryForList(sql + " ORDER BY r.id DESC LIMIT 50");
         for (Map<String, Object> r : list) {
             r.put("agents", jdbc.queryForList("SELECT agent_key agentKey, agent_name agentName, score, verdict, comments, suggestions_json suggestionsJson FROM design_review_agent WHERE review_id=? ORDER BY id", r.get("id")));
+            List<String> reports = jdbc.queryForList("SELECT report_json FROM design_review_report WHERE review_id=?", String.class, r.get("id"));
+            if(!reports.isEmpty()) {
+                try {
+                    Map<String,Object> full = mapper.readValue(reports.get(0), Map.class);
+                    r.putAll(full);
+                    r.put("id", full.getOrDefault("reviewId", r.get("id")));
+                    r.put("createdAt", r.get("createdAt"));
+                } catch(Exception ignored) {}
+            }
         }
         return list;
     }
@@ -648,7 +660,7 @@ public class CreativeAiController {
     }
 
     private Map<String, Object> reviewByAgent(Map<String, String> agent, Map<String, Object> asset, String context) {
-        String instruction = "你是“之间味道”文创设计售卖平台AI评审团成员：" + agent.get("name") + "。你的评审重点：" + agent.get("focus") + "。请评审一个图片类文创设计方案。必须只返回JSON，不要markdown。格式：{\"score\":0-100整数,\"verdict\":\"一句话结论\",\"comments\":\"具体评语\",\"suggestions\":[\"建议1\",\"建议2\",\"建议3\"]}";
+        String instruction = "你是“之间味道”文创设计售卖平台AI评审团成员：" + agent.get("name") + "。你的评审重点：" + agent.get("focus") + "。请评审一个图片类文创产品方案，可结合用户提供的爆款/竞品信息做对标。必须只返回JSON，不要markdown。格式：{\"score\":0-100整数,\"verdict\":\"一句话结论\",\"comments\":\"具体评语\",\"suggestions\":[\"建议1\",\"建议2\",\"建议3\"],\"subScores\":{\"设计表现\":0-100,\"市场潜力\":0-100,\"成本生产\":0-100,\"消费转化\":0-100,\"爆款对标\":0-100},\"risks\":[{\"level\":\"高/中/低\",\"name\":\"风险名\",\"advice\":\"处理建议\"}],\"opportunities\":[\"机会1\",\"机会2\"],\"nextActions\":[\"下一步1\",\"下一步2\"],\"benchmark\":\"与爆款/竞品相比的差距和可借鉴点\"}";
         String user = "设计资产标题：" + asset.get("title") + "\n资产类型：" + asset.get("assetType") + "\n标签：" + asset.get("tags") + "\n生成/设计Prompt：" + asset.get("prompt") + "\n图片地址：" + asset.get("fileUrl") + "\n补充业务背景：" + (context == null ? "用于图片IP文创产品开发，可衍生明信片、装饰画、手机壳、帆布袋等SKU。" : context);
         try {
             String content = callChat(instruction, user);
@@ -690,7 +702,12 @@ public class CreativeAiController {
                 "score", score,
                 "verdict", n.path("verdict").asText("建议进一步优化"),
                 "comments", n.path("comments").asText("该方案具备一定文创开发潜力。"),
-                "suggestions", suggestions
+                "suggestions", suggestions,
+                "subScores", jsonMap(n.path("subScores")),
+                "risks", jsonList(n.path("risks")),
+                "opportunities", stringList(n.path("opportunities")),
+                "nextActions", stringList(n.path("nextActions")),
+                "benchmark", n.path("benchmark").asText("")
         ));
     }
 
@@ -699,9 +716,39 @@ public class CreativeAiController {
                 "score", 72,
                 "verdict", "已完成基础评审，建议人工复核",
                 "comments", agent.get("name") + "认为该方案可进入初步讨论；AI评审调用异常：" + err,
-                "suggestions", List.of("明确目标SKU与使用场景", "补充视觉主次层级", "进行小样打样与用户反馈")
+                "suggestions", List.of("明确目标SKU与使用场景", "补充视觉主次层级", "进行小样打样与用户反馈"),
+                "subScores", Map.of("设计表现",72,"市场潜力",70,"成本生产",74,"消费转化",72,"爆款对标",68),
+                "risks", List.of(Map.of("level","中","name","信息不足","advice","补充目标渠道、竞品价格、预计销量和工艺参数后复评")),
+                "opportunities", List.of("可先做小批量打样验证", "可围绕地域文化故事强化传播点"),
+                "nextActions", List.of("完善竞品/爆款参考", "进入BOM与成本测算", "生成改版视觉方案"),
+                "benchmark", "暂未获得完整爆款对标数据，建议补充竞品链接、价格、销量、卖点。"
         ));
     }
+
+    private Map<String,Object> buildReviewMatrix(List<Map<String,Object>> results) {
+        List<String> keys=List.of("设计表现","市场潜力","成本生产","消费转化","爆款对标");
+        Map<String,Object> matrix=new LinkedHashMap<>();
+        for(String k:keys){int sum=0,count=0;for(Map<String,Object> r:results){Object ss=r.get("subScores");if(ss instanceof Map<?,?> m&&m.get(k) instanceof Number n){sum+=n.intValue();count++;}}matrix.put(k,count==0?0:BigDecimal.valueOf(sum).divide(BigDecimal.valueOf(count),1,java.math.RoundingMode.HALF_UP));}
+        return matrix;
+    }
+
+    private Map<String,Object> buildUpgradeRoadmap(BigDecimal avg,String recommendation,List<Map<String,Object>> results) {
+        List<Object> risks=new ArrayList<>(), opportunities=new ArrayList<>(), actions=new ArrayList<>();
+        for(Map<String,Object> r:results){ if(r.get("risks") instanceof List<?> l)risks.addAll(l); if(r.get("opportunities") instanceof List<?> l)opportunities.addAll(l); if(r.get("nextActions") instanceof List<?> l)actions.addAll(l); }
+        return Map.of(
+                "phase1", List.of("结构化评分：补全设计/市场/成本/转化/爆款对标五维雷达图", "沉淀风险标签和改版建议", "形成原方案与改版方案对比记录"),
+                "phase2", List.of("爆款拆解：录入竞品价格、销量、材质、卖点、渠道，输出差距表", "生成适配不同渠道的卖点与价格带", "识别IP、文化表达、生产和库存风险"),
+                "phase3", List.of("通过后进入BOM、工艺路线和成本核算", "自动生成打样任务和小批量试销计划", "依据试销反馈回流更新评分模型"),
+                "risks", risks.stream().limit(8).toList(),
+                "opportunities", opportunities.stream().limit(8).toList(),
+                "nextActions", actions.stream().limit(10).toList(),
+                "decision", avg.intValue()>=85?"可以进入打样与成本核算":avg.intValue()>=70?"建议先改版，再进入打样评审":"建议暂缓，先重做定位/设计/成本方案"
+        );
+    }
+
+    private Map<String,Object> jsonMap(JsonNode n){Map<String,Object> m=new LinkedHashMap<>();if(n!=null&&n.isObject())n.fields().forEachRemaining(e->m.put(e.getKey(),e.getValue().isNumber()?e.getValue().numberValue():e.getValue().asText()));return m;}
+    private List<Object> jsonList(JsonNode n){List<Object> l=new ArrayList<>();if(n!=null&&n.isArray())n.forEach(x->{if(x.isObject())l.add(jsonMap(x));else l.add(x.asText());});return l;}
+    private List<String> stringList(JsonNode n){List<String> l=new ArrayList<>();if(n!=null&&n.isArray())n.forEach(x->l.add(x.asText()));return l;}
 
     private String buildReviewSummary(BigDecimal avg, String recommendation, List<Map<String, Object>> results) {
         String rec = "go".equals(recommendation) ? "建议进入商品化打样" : "adjust".equals(recommendation) ? "建议优化后再打样" : "暂不建议进入生产";
