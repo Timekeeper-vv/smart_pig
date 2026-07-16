@@ -16,12 +16,12 @@ const isEdit = ref<boolean>(false)
 const form = ref<UserForm>({ id: '', username: '', age: '', email: '', phone: '', password: '', role: 'admin' })
 
 const roleOptions: Array<{ value: Role; label: string }> = [
-  { value: 'admin',      label: '运营后台' },
-  { value: 'technician', label: '设计师' },
-  { value: 'feeder',     label: '消费者' },
+  { value: 'admin',      label: '超级管理员' },
+  { value: 'technician', label: '审批主管' },
+  { value: 'feeder',     label: '员工' },
 ]
-const roleLabelMap: Record<Role, string> = { admin: '运营后台', technician: '设计师', feeder: '消费者' }
-const roleBadgeClass: Record<Role, string> = { admin: 'badge-admin', technician: 'badge-tech', feeder: 'badge-feeder' }
+const roleLabelMap: Record<Role, string> = { admin: '超级管理员', technician: '审批主管', feeder: '员工' }
+const roleBadgeClass: Record<Role, string> = { admin: 'badge-admin', technician: 'badge-approver', feeder: 'badge-employee' }
 const searchQuery = ref<string>('')
 const currentPage = ref<number>(1)
 const pageSize = ref<number>(10)
@@ -136,7 +136,7 @@ function initial(name) { return name ? name.charAt(0).toUpperCase() : '?' }
     <div class="page-header">
       <div>
         <h2 class="page-title">用户管理</h2>
-        <p class="page-desc">管理平台消费者、设计师与运营后台账号</p>
+        <p class="page-desc">管理超级管理员、审批主管与员工账号权限</p>
       </div>
       <button class="btn btn-primary" @click="openAdd">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -268,6 +268,7 @@ function initial(name) { return name ? name.charAt(0).toUpperCase() : '?' }
           <select v-model="form.role" required>
             <option v-for="opt in roleOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
+          <small class="role-help">超管可管理全部；审批主管负责审核申请；员工负责制作内容和提交申请。</small>
         </div>
         <div class="form-group" style="grid-column: 1 / -1">
           <label>密码 <span v-if="!isEdit" style="color:var(--c-error)">*</span></label>
@@ -293,9 +294,10 @@ function initial(name) { return name ? name.charAt(0).toUpperCase() : '?' }
   font-weight: 600;
   white-space: nowrap;
 }
-.badge-admin   { background: rgba(13,148,136,.12); color: #0d9488; }
-.badge-tech    { background: rgba(37,99,235,.12);  color: #2563eb; }
-.badge-feeder  { background: rgba(217,119,6,.12);  color: #d97706; }
+.badge-admin    { background: rgba(239,68,68,.12); color: #ef4444; }
+.badge-approver { background: rgba(124,58,237,.12); color: #7c3aed; }
+.badge-employee { background: rgba(13,148,136,.12); color: #0d9488; }
+.role-help { display:block; margin-top:6px; font-size:12px; color:var(--c-text-3); line-height:1.4; }
 
 .user-avatar {
   width: 32px;

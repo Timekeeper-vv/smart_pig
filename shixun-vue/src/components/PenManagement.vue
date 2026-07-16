@@ -9,7 +9,7 @@ interface PenForm { penCode: string; penName: string; capacity: number; responsi
 
 const pens = ref<Pen[]>([])
 const users = ref<UserRecord[]>([])
-const feeders = computed(() => users.value.filter(u => u.role === 'feeder'))
+const employees = computed(() => users.value.filter(u => u.role === 'feeder'))
 const search = ref<string>('')
 const showModal = ref<boolean>(false)
 const editingId = ref<number | null>(null)
@@ -181,10 +181,10 @@ onMounted(load)
           <input v-model.number="form.capacity" type="number" min="1" step="1" />
         </div>
         <div class="form-group">
-          <label>责任人（饲养员）</label>
+          <label>责任人（员工）</label>
           <select v-model="form.responsiblePerson">
-            <option value="">— 请选择饲养员 —</option>
-            <option v-for="u in feeders" :key="u.id" :value="u.username">{{ u.username }}</option>
+            <option value="">— 请选择员工 —</option>
+            <option v-for="u in employees" :key="u.id" :value="u.username">{{ u.username }}</option>
           </select>
         </div>
         <div class="form-group">

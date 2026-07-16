@@ -11,25 +11,54 @@ import LogisticsTracking from './components/LogisticsTracking.vue'
 import WarehouseManagement from './components/WarehouseManagement.vue'
 import DesignerCenter from './components/DesignerCenter.vue'
 import UserManagement from './components/UserManagement.vue'
+import ChainApplicationPage from './components/ChainApplicationPage.vue'
+import FinanceApplicationPage from './components/FinanceApplicationPage.vue'
+import ApprovalCenter from './components/ApprovalCenter.vue'
 import NotificationPanel from './components/NotificationPanel.vue'
 import GlobalAlert from './components/GlobalAlert.vue'
 import AiChat from './components/AiChat.vue'
 
+// 角色兼容说明：
+// admin      = 超级管理员：拥有全部功能，包括账号权限、审批和系统配置
+// technician = 审批主管：可查看业务模块并处理审批，但不能管理账号角色
+// feeder     = 员工：可制作内容、发起/提交申请，不能审批和管理账号
+const ALL_ROLES: Role[] = ['admin', 'technician', 'feeder']
+const MANAGER_ROLES: Role[] = ['admin', 'technician']
+const STAFF_WORKFLOW_ROLES: Role[] = ['admin', 'technician', 'feeder']
+const SUPER_ADMIN_ROLES: Role[] = ['admin']
+
 const PAGE_ROLES: Record<string, Role[]> = {
-  dashboard:    ['admin', 'technician', 'feeder'],
-  studio:       ['admin', 'technician'],
-  creative2d:   ['admin', 'technician'],
-  creative3d:   ['admin', 'technician'],
-  creativeReview:['admin', 'technician'],
-  scaleUp:      ['admin', 'technician'],
-  production:   ['admin', 'technician'],
-  sampleProduction:['admin', 'technician'],
-  bulkProduction:['admin', 'technician'],
-  logistics:    ['admin', 'technician'],
-  warehouseLogistics:['admin', 'technician'],
-  warehouse:    ['admin', 'technician'],
-  designers:    ['admin', 'technician'],
-  users:        ['admin'],
+  dashboard:    ALL_ROLES,
+  approvalCenter:MANAGER_ROLES,
+  studio:       STAFF_WORKFLOW_ROLES,
+  creative2d:   STAFF_WORKFLOW_ROLES,
+  creative3d:   STAFF_WORKFLOW_ROLES,
+  creativeReview:MANAGER_ROLES,
+  chain:        STAFF_WORKFLOW_ROLES,
+  chainMarketing:STAFF_WORKFLOW_ROLES,
+  chainNewProduct:STAFF_WORKFLOW_ROLES,
+  chainPriceAdjust:STAFF_WORKFLOW_ROLES,
+  finance:      STAFF_WORKFLOW_ROLES,
+  financeAssetScrap:STAFF_WORKFLOW_ROLES,
+  financePublicPayment:STAFF_WORKFLOW_ROLES,
+  financePettyCash:STAFF_WORKFLOW_ROLES,
+  financePersonalExpense:STAFF_WORKFLOW_ROLES,
+  financePromotionApproval:MANAGER_ROLES,
+  financeSeal:STAFF_WORKFLOW_ROLES,
+  financePettyCashRepay:STAFF_WORKFLOW_ROLES,
+  financeTravel:STAFF_WORKFLOW_ROLES,
+  financeInvoice:STAFF_WORKFLOW_ROLES,
+  financeSpecialExpense:STAFF_WORKFLOW_ROLES,
+  financePettyCashWriteoff:STAFF_WORKFLOW_ROLES,
+  scaleUp:      STAFF_WORKFLOW_ROLES,
+  production:   MANAGER_ROLES,
+  sampleProduction:STAFF_WORKFLOW_ROLES,
+  bulkProduction:STAFF_WORKFLOW_ROLES,
+  logistics:    MANAGER_ROLES,
+  warehouseLogistics:MANAGER_ROLES,
+  warehouse:    MANAGER_ROLES,
+  designers:    MANAGER_ROLES,
+  users:        SUPER_ADMIN_ROLES,
 }
 
 function hasAccess(page: string, role?: Role): boolean {
@@ -80,10 +109,27 @@ function onLogout(): void {
 
 const pageLabels: Record<string, string> = {
   dashboard:    '经营看板',
+  approvalCenter:'审批中心',
   studio:       '创意设计',
   creative2d:   '2D创意生图',
   creative3d:   '3D辅助建模',
   creativeReview:'智能评估',
+  chain:        '之间连锁',
+  chainMarketing:'门店营销方案申请【连锁】',
+  chainNewProduct:'新商品上架申请【连锁】',
+  chainPriceAdjust:'商品售价调整申请【连锁】',
+  finance:      '财务管理',
+  financeAssetScrap:'固定资产报废申请',
+  financePublicPayment:'对公付款申请(供应链)',
+  financePettyCash:'备用金申请',
+  financePersonalExpense:'个人费用报销',
+  financePromotionApproval:'促销活动审批',
+  financeSeal:'用章用印申请',
+  financePettyCashRepay:'备用金还款',
+  financeTravel:'差旅报销',
+  financeInvoice:'开票申请',
+  financeSpecialExpense:'费用报销(特殊事项)',
+  financePettyCashWriteoff:'备用金核销',
   scaleUp:      '生产管理',
   production:   '智能成本核算引擎',
   sampleProduction:'产品打样管理',
@@ -143,10 +189,27 @@ const pageLabels: Record<string, string> = {
       <!-- Main content -->
       <main class="app-main">
         <CreativeDashboard    v-if="currentPage === 'dashboard'"   @switch-page="p => { if (hasAccess(p, currentUser?.role)) currentPage = p as PageName }" @alert="showAlert" />
+        <ApprovalCenter v-if="currentPage === 'approvalCenter'" :current-user="currentUser" />
         <CreativeStudio v-if="currentPage === 'studio'" initial-view="image2d" @alert="showAlert" />
         <CreativeStudio v-if="currentPage === 'creative2d'" initial-view="image2d" @alert="showAlert" />
         <CreativeStudio v-if="currentPage === 'creative3d'" initial-view="model3d" @alert="showAlert" />
         <CreativeStudio v-if="currentPage === 'creativeReview'" initial-view="review" @alert="showAlert" />
+        <ChainApplicationPage v-if="currentPage === 'chain'" type="home" :current-user="currentUser" />
+        <ChainApplicationPage v-if="currentPage === 'chainMarketing'" type="marketing" :current-user="currentUser" />
+        <ChainApplicationPage v-if="currentPage === 'chainNewProduct'" type="newProduct" :current-user="currentUser" />
+        <ChainApplicationPage v-if="currentPage === 'chainPriceAdjust'" type="priceAdjust" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'finance'" type="home" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financeAssetScrap'" type="assetScrap" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financePublicPayment'" type="publicPayment" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financePettyCash'" type="pettyCash" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financePersonalExpense'" type="personalExpense" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financePromotionApproval'" type="promotionApproval" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financeSeal'" type="seal" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financePettyCashRepay'" type="pettyCashRepay" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financeTravel'" type="travel" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financeInvoice'" type="invoice" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financeSpecialExpense'" type="specialExpense" :current-user="currentUser" />
+        <FinanceApplicationPage v-if="currentPage === 'financePettyCashWriteoff'" type="pettyCashWriteoff" :current-user="currentUser" />
         <ScaleUpPlatform     v-if="currentPage === 'scaleUp'" @alert="showAlert" />
         <ProductionManagement v-if="currentPage === 'production'" initial-view="cost" @alert="showAlert" />
         <ProductionManagement v-if="currentPage === 'sampleProduction'" initial-view="sample" @alert="showAlert" />

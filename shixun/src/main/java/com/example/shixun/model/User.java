@@ -25,7 +25,7 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
-    @Schema(description = "角色：admin 管理员 / technician 技术员 / feeder 饲养员", example = "admin")
+    @Schema(description = "角色：admin 超级管理员 / technician 审批主管 / feeder 员工", example = "admin")
     private String role;
 
     public User() {

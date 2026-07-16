@@ -1,7 +1,11 @@
+/**
+ * 角色编码保持兼容历史数据：
+ * admin=超级管理员，technician=审批主管，feeder=员工。
+ */
 export type Role = 'admin' | 'technician' | 'feeder'
 export type AlertType = 'success' | 'error'
 export type PageName =
-  | 'dashboard' | 'studio' | 'creative2d' | 'creative3d' | 'creativeReview' | 'warehouseLogistics' | 'marketing' | 'businessAi' | 'commercialMvp' | 'scaleUp' | 'production' | 'sampleProduction' | 'bulkProduction' | 'marketplace' | 'orders' | 'logistics' | 'warehouse' | 'designers'
+  | 'dashboard' | 'approvalCenter' | 'studio' | 'creative2d' | 'creative3d' | 'creativeReview' | 'chain' | 'chainMarketing' | 'chainNewProduct' | 'chainPriceAdjust' | 'finance' | 'financeAssetScrap' | 'financePublicPayment' | 'financePettyCash' | 'financePersonalExpense' | 'financePromotionApproval' | 'financeSeal' | 'financePettyCashRepay' | 'financeTravel' | 'financeInvoice' | 'financeSpecialExpense' | 'financePettyCashWriteoff' | 'warehouseLogistics' | 'marketing' | 'businessAi' | 'commercialMvp' | 'scaleUp' | 'production' | 'sampleProduction' | 'bulkProduction' | 'marketplace' | 'orders' | 'logistics' | 'warehouse' | 'designers'
   | 'statistics' | 'pens' | 'drugs' | 'batches'
   | 'animals' | 'immunization' | 'medication' | 'transfer'
   | 'slaughter' | 'death' | 'traceability' | 'users' | 'products'

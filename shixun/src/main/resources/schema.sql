@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS user (
     email VARCHAR(200),
     phone VARCHAR(20),
     password VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'admin'
+    role VARCHAR(20) NOT NULL DEFAULT 'admin' COMMENT 'admin=超级管理员, technician=审批主管, feeder=员工'
 );
 -- 兼容已存在的数据库：为旧表补加 role 列（列已存在时报错会被 continue-on-error 忽略）
 ALTER TABLE `user` ADD COLUMN `role` VARCHAR(20) NOT NULL DEFAULT 'admin';
@@ -135,10 +135,10 @@ CREATE TABLE IF NOT EXISTS slaughter_records (
 
 -- 初始用户数据（密码在服务层经 BCrypt 编码后存储，通过 API 创建的账号可正常登录）
 INSERT IGNORE INTO user (username, age, email, phone, password, role) VALUES
-('testuser', 20, 'test@example.com', '13800138000', '123456', 'admin'),
-('admin', 25, 'admin@farm.com', '13800000001', '123456', 'admin'),
-('tech01', 28, 'tech01@farm.com', '13800000002', '123456', 'technician'),
-('feeder01', 22, 'feeder01@farm.com', '13800000003', '123456', 'feeder');
+('superadmin', 30, 'superadmin@farm.com', '13800000001', '123456', 'admin'),
+('approver01', 28, 'approver01@farm.com', '13800000002', '123456', 'technician'),
+('employee01', 24, 'employee01@farm.com', '13800000003', '123456', 'feeder'),
+('testuser', 20, 'test@example.com', '13800138000', '123456', 'feeder');
 
 INSERT IGNORE INTO product (name, price, stock, category, description) VALUES
 ('iPhone', 5999.00, 100, 'Electronics', 'Latest smartphone'),

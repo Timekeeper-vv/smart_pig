@@ -9,33 +9,59 @@ interface MenuGroup { group: string; items: MenuItem[] }
 const props = defineProps<{ currentUser: User; currentPage: PageName; collapsed: boolean }>()
 const emit = defineEmits<{ 'switch-page': [page: PageName]; 'logout': []; 'toggle': [] }>()
 
-const roleLabels: Record<Role, string> = { admin: '运营后台', technician: '设计师', feeder: '消费者' }
-const roleColors: Record<Role, string> = { admin: '#f97316', technician: '#7c3aed', feeder: '#0d9488' }
+const roleLabels: Record<Role, string> = { admin: '超级管理员', technician: '审批主管', feeder: '员工' }
+const roleColors: Record<Role, string> = { admin: '#ef4444', technician: '#7c3aed', feeder: '#0d9488' }
+
+const ALL_ROLES: Role[] = ['admin', 'technician', 'feeder']
+const MANAGER_ROLES: Role[] = ['admin', 'technician']
+const STAFF_WORKFLOW_ROLES: Role[] = ['admin', 'technician', 'feeder']
+const SUPER_ADMIN_ROLES: Role[] = ['admin']
 
 const allMenus: MenuGroup[] = [
   { group: '总览', items: [
-    { key: 'dashboard', label: '经营看板', roles: ['admin','technician','feeder'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>` },
+    { key: 'dashboard', label: '经营看板', roles: ALL_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>` },
+    { key: 'approvalCenter', label: '审批中心', roles: MANAGER_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>` },
   ]},
   { group: '', items: [
   ]},
   { group: '', items: [
-    { key: 'studio', label: '创意设计', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/><path d="M19 15l.9 2.7L22 19l-2.1.7L19 22l-.9-2.3L16 19l2.1-1.3L19 15z"/></svg>` },
-    { key: 'creative2d', label: '2D创意生图', parentKey: 'studio', roles: ['admin','technician'], icon: `<svg></svg>` },
-    { key: 'creative3d', label: '3D辅助建模', parentKey: 'studio', roles: ['admin','technician'], icon: `<svg></svg>` },
-    { key: 'creativeReview', label: '智能评估', parentKey: 'studio', roles: ['admin','technician'], icon: `<svg></svg>` },
-    { key: 'scaleUp', label: '生产管理', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16"/><path d="M7 16V8"/><path d="M12 16V5"/><path d="M17 16v-3"/></svg>` },
-    { key: 'production', label: '智能成本核算引擎', parentKey: 'scaleUp', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><path d="M6 3v18"/><path d="M18 3v10"/></svg>` },
-    { key: 'sampleProduction', label: '产品打样管理', parentKey: 'scaleUp', roles: ['admin','technician'], icon: `<svg></svg>` },
-    { key: 'bulkProduction', label: '大货生产管理', parentKey: 'scaleUp', roles: ['admin','technician'], icon: `<svg></svg>` },
+    { key: 'studio', label: '创意设计', roles: STAFF_WORKFLOW_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"/><path d="M19 15l.9 2.7L22 19l-2.1.7L19 22l-.9-2.3L16 19l2.1-1.3L19 15z"/></svg>` },
+    { key: 'creative2d', label: '2D创意生图', parentKey: 'studio', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'creative3d', label: '3D辅助建模', parentKey: 'studio', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'creativeReview', label: '智能评估', parentKey: 'studio', roles: MANAGER_ROLES, icon: `<svg></svg>` },
+    { key: 'scaleUp', label: '生产管理', roles: STAFF_WORKFLOW_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16"/><path d="M7 16V8"/><path d="M12 16V5"/><path d="M17 16v-3"/></svg>` },
+    { key: 'production', label: '智能成本核算引擎', parentKey: 'scaleUp', roles: MANAGER_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><path d="M6 3v18"/><path d="M18 3v10"/></svg>` },
+    { key: 'sampleProduction', label: '产品打样管理', parentKey: 'scaleUp', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'bulkProduction', label: '大货生产管理', parentKey: 'scaleUp', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
   ]},
   { group: '', items: [
-    { key: 'warehouseLogistics', label: '仓储与物流管理', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-6 9 6v10H3z"/><path d="M7 20v-6h10v6"/></svg>` },
-    { key: 'warehouse', label: '智能库存预警 / 入库拣货出库', parentKey: 'warehouseLogistics', roles: ['admin','technician'], icon: `<svg></svg>` },
-    { key: 'logistics', label: '物流跟踪', parentKey: 'warehouseLogistics', roles: ['admin','technician'], icon: `<svg></svg>` },
-    { key: 'designers', label: '设计师/创作者', roles: ['admin','technician'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>` },
+    { key: 'warehouseLogistics', label: '仓储与物流管理', roles: MANAGER_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-6 9 6v10H3z"/><path d="M7 20v-6h10v6"/></svg>` },
+    { key: 'warehouse', label: '智能库存预警 / 入库拣货出库', parentKey: 'warehouseLogistics', roles: MANAGER_ROLES, icon: `<svg></svg>` },
+    { key: 'logistics', label: '物流跟踪', parentKey: 'warehouseLogistics', roles: MANAGER_ROLES, icon: `<svg></svg>` },
+    { key: 'designers', label: '设计师/创作者', roles: MANAGER_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>` },
+  ]},
+  { group: '', items: [
+    { key: 'chain', label: '之间连锁', roles: STAFF_WORKFLOW_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V7l8-4 8 4v14"/><path d="M9 21v-8h6v8"/><path d="M4 11h16"/></svg>` },
+    { key: 'chainMarketing', label: '门店营销方案申请【连锁】', parentKey: 'chain', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'chainNewProduct', label: '新商品上架申请【连锁】', parentKey: 'chain', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'chainPriceAdjust', label: '商品售价调整申请【连锁】', parentKey: 'chain', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+  ]},
+  { group: '', items: [
+    { key: 'finance', label: '财务管理', roles: STAFF_WORKFLOW_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-8h6v8"/><path d="M8 9h8"/></svg>` },
+    { key: 'financeAssetScrap', label: '固定资产报废申请', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financePublicPayment', label: '对公付款申请(供应链)', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financePettyCash', label: '备用金申请', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financePersonalExpense', label: '个人费用报销', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financePromotionApproval', label: '促销活动审批', parentKey: 'finance', roles: MANAGER_ROLES, icon: `<svg></svg>` },
+    { key: 'financeSeal', label: '用章用印申请', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financePettyCashRepay', label: '备用金还款', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financeTravel', label: '差旅报销', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financeInvoice', label: '开票申请', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financeSpecialExpense', label: '费用报销(特殊事项)', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
+    { key: 'financePettyCashWriteoff', label: '备用金核销', parentKey: 'finance', roles: STAFF_WORKFLOW_ROLES, icon: `<svg></svg>` },
   ]},
   { group: '系统', items: [
-    { key: 'users', label: '账号权限', roles: ['admin'], icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>` },
+    { key: 'users', label: '账号权限', roles: SUPER_ADMIN_ROLES, icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>` },
   ]},
 ]
 
@@ -43,8 +69,8 @@ const menus = computed<MenuGroup[]>(() => {
   const role: Role = props.currentUser?.role || 'admin'
   return allMenus.map(g => ({ ...g, items: g.items.filter(item => item.roles.includes(role)) })).filter(g => g.items.length > 0)
 })
-const currentRoleLabel = computed<string>(() => roleLabels[props.currentUser?.role] || '运营后台')
-const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.role] || '#f97316')
+const currentRoleLabel = computed<string>(() => roleLabels[props.currentUser?.role] || '超级管理员')
+const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.role] || '#ef4444')
 </script>
 
 <template>
@@ -71,7 +97,7 @@ const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.ro
           v-for="item in menu.items"
           :key="item.key"
           class="nav-item"
-          :class="{ active: currentPage === item.key, parent: ['studio','scaleUp','warehouseLogistics'].includes(item.key), child: !!item.parentKey }"
+          :class="{ active: currentPage === item.key, parent: ['studio','scaleUp','warehouseLogistics','chain','finance'].includes(item.key), child: !!item.parentKey }"
           :title="collapsed ? item.label : ''"
           @click="emit('switch-page', item.key)"
         >
@@ -80,7 +106,7 @@ const currentRoleColor = computed<string>(() => roleColors[props.currentUser?.ro
             <span v-if="!collapsed" class="nav-content">
               <span v-if="item.parentKey" class="child-line"></span>
               <span class="nav-label">{{ item.label }}</span>
-              <span v-if="['studio','scaleUp','warehouseLogistics'].includes(item.key)" class="parent-arrow">⌄</span>
+              <span v-if="['studio','scaleUp','warehouseLogistics','chain','finance'].includes(item.key)" class="parent-arrow">⌄</span>
             </span>
           </transition>
           <transition name="fade">
